@@ -1,0 +1,47 @@
+{
+  "name": "authonic",
+  "main": "auth.js",
+  "homepage": "https://github.com/markusila/firebaseAuthStarter",
+  "description": "Email/Socials auth plugin powerd by Firebase (ready to be used on any stage of development)",
+  "keywords": [
+    "auth",
+    "ionic",
+    "firebase",
+    "authorize",
+    "authorisation",
+    "simple",
+    "login",
+    "ionic",
+    "login",
+    "ionic",
+    "firebase",
+    "firebase",
+    "login",
+    "socials",
+    "login",
+    "account",
+    "for",
+    "app",
+    "login",
+    "for",
+    "app",
+    "login",
+    "plugin",
+    "simple",
+    "plugin"
+  ],
+  "authors": [
+    "Mark Okhman"
+  ],
+  "license": "MIT",
+  "_release": "219b116f97",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "219b116f97dce98c1d92c1842ef2547cf65e5523"
+  },
+  "_source": "git://github.com/markusila/authonic.git",
+  "_target": "*",
+  "_originalSource": "authonic",
+  "_direct": true
+}

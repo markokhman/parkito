@@ -8,5 +8,5 @@ angular.module('dialog-controllers', [])
 })
 
 .controller('DialogDetailCtrl', function($scope, $stateParams, Chats) {
-  $scope.chat = Chats.get($stateParams.chatId);
+  $scope.chat = Chats.get($stateParams.id);
 });
