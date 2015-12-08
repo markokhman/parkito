@@ -5,10 +5,28 @@
   The Friends service returns an array of friend data
 -->
 <ion-view view-title="{{chat.name}}">
-  <ion-content class="padding">
-    <img ng-src="{{chat.face}}" style="width: 64px; height: 64px">
-    <p>
-      {{chat.lastText}}
-    </p>
+  <ion-content class="padding" hide-tabs='true'>
+    <div class="list card" ng-repeat="message in messages">
+      <div class="item item-divider">New spot</div>
+      <div class="item item-body">
+        <div ng-if="message.mestype=='text'">
+          {{message.mestext}}
+        </div>
+        <div ng-if="message.mestype=='thanks'">
+          <img width="70px" src="img/thanks.png">
+        </div>
+      </div>
+    </div>
   </ion-content>
+  <div class="bar bar-footer" style="font-size: 52px !important;line-height: 52px !important; ">
+    <div class="row">
+      <div class="col" style="text-align:center; font-size: 52px !important;line-height: 52px !important;">
+        <!-- &nbsp; -->
+        <a ng-click="postThanks()" style="font-size: 52px !important;line-height: 52px !important; "><img width="70px" src="img/thanks.png"></a>
+      </div>
+      <div class="col" style="text-align:center; font-size: 52px !important;line-height: 52px !important;">
+        <a ng-click="postSpot()" style="font-size: 52px !important;line-height: 52px !important; "><img width="50px" src="img/pin.png"></a>
+      </div>
+    </div>
+  </div>
 </ion-view>

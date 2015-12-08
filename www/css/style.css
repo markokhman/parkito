@@ -1,1 +1,11 @@
 /* Empty. Add your own CSS if you like */
+.bar-footer {
+	background-color: transparent;
+	height: 95px; 
+	font-size: 52px !important;
+	line-height: 52px !important;
+}
+
+.bar {
+	background-image: none;
+}

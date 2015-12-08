@@ -23,6 +23,10 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services','d
   });
 })
 
+.constant("CONST", {
+    "fire": "https://parkito.firebaseio.com"
+})
+
 .config(function($stateProvider, $urlRouterProvider) {
 
   // Ionic uses AngularUI Router which uses the concept of states
@@ -61,7 +65,7 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services','d
       }
     })
     .state('tab.dialog-detail', {
-      url: '/dialogs/:id',
+      url: '/dialogs/:id/:name',
       views: {
         'tab-dialogs': {
           templateUrl: 'templates/dialog-detail.html',
