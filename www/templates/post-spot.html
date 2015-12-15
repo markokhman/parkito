@@ -1,0 +1,22 @@
+<ion-modal-view ng-controller="ModalCtrl">
+  <ion-content  scroll="false">
+      <ng-map style="height:100%; width: 100%;"></ng-map>
+
+  </ion-content>
+
+  <div class="card" style="position:absolute; top: 15px; right:0; left:0; margin:auto; width:90%; z-index:1000;">
+    <div class="item item-icon-left">
+    	 <i class="icon ion-arrow-left-c" ng-click="closeModal()"></i>
+      	{{spot.formatted_address}}
+    </div>
+  </div>
+
+    <a ng-click="openModal()" style="font-size: 52px !important;line-height: 52px !important; z-index:1000;">
+      <img style="position:absolute;top:0; left: 0; right:0; bottom:0; margin:auto;" width="50px" src="img/pin.png">
+    </a>
+
+    <button ng-click="showPopup()" style="position:absolute; width:80%; bottom:35px; right:0; left:0; margin:auto; z-index:1000;" class="button button-large button-positive">
+      Post
+    </button>
+
+ </ion-modal-view>

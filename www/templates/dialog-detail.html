@@ -4,16 +4,34 @@
   The FriendsCtrl pulls data from the Friends service (service.js)
   The Friends service returns an array of friend data
 -->
+
 <ion-view view-title="{{chat.name}}">
   <ion-content class="padding" hide-tabs='true'>
     <div class="list card" ng-repeat="message in messages">
       <div class="item item-divider">New spot</div>
-      <div class="item item-body">
-        <div ng-if="message.mestype=='text'">
+      <div class="item item-body" ng-click="takeSpot()">
+        <div ng-show="message.mestype=='text'">
           {{message.mestext}}
         </div>
-        <div ng-if="message.mestype=='thanks'">
-          <img width="70px" src="img/thanks.png">
+        <div ng-show="message.mestype=='thanks'" style="width:40px; float:left;">
+          <!-- <img width="70px" src="img/thanks.png"> -->
+        </div>
+        <div style="width:10%; float:right;">
+          <div
+            round-progress
+            max="100"
+            current="5"
+            color="#2ecc71"
+            bgcolor="#eaeaea"
+            radius="50"
+            stroke="14"
+            semi="false"
+            rounded="false"
+            clockwise="false"
+            responsive="true"
+            duration="400"
+            animation="linearEase">
+          </div>
         </div>
       </div>
     </div>
@@ -25,7 +43,7 @@
         <a ng-click="postThanks()" style="font-size: 52px !important;line-height: 52px !important; "><img width="70px" src="img/thanks.png"></a>
       </div>
       <div class="col" style="text-align:center; font-size: 52px !important;line-height: 52px !important;">
-        <a ng-click="postSpot()" style="font-size: 52px !important;line-height: 52px !important; "><img width="50px" src="img/pin.png"></a>
+        <a ng-click="openModal()" style="font-size: 52px !important;line-height: 52px !important; "><img width="50px" src="img/pin.png"></a>
       </div>
     </div>
   </div>
