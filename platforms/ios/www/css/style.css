@@ -1,1 +1,47 @@
 /* Empty. Add your own CSS if you like */
+.bar-footer {
+	background-color: transparent;
+	height: 95px; 
+	font-size: 52px !important;
+	line-height: 52px !important;
+}
+
+.bar {
+	background-image: none;
+}
+
+.scroll {
+	height: 100%;
+}
+
+.gmnoprint {
+	display: none;
+}
+
+.popup-container .popup {
+	width: 100%;
+	background-color: rgba(255, 255, 255, 0);
+	border: none;
+	color: white;
+}
+.popup-head {
+	border-bottom: none;
+}
+
+
+
+.popup-title {
+	color: white;
+	font-size: 25px;
+}
+
+.popup-sub-title {
+	color: white;
+	font-size: 17px;
+}
+
+.backdrop {
+	background-color: rgba(0, 0, 0, 0.8);
+}
+
+boxStyle: { background: "#ffffff", paddingLeft:"4px" }

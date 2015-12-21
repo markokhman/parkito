@@ -37,6 +37,7 @@ angular.module('angular-svg-round-progress', []);
 
 angular.module('angular-svg-round-progress').constant('roundProgressConfig', {
     max:            50,
+    posted:            0,
     semi:           false,
     rounded:        false,
     responsive:     false,
@@ -325,6 +326,7 @@ angular.module('angular-svg-round-progress')
                 replace: true,
                 transclude: true,
                 scope:{
+                    posted:        "=",
                     current:        "=",
                     max:            "=",
                     semi:           "=",
@@ -348,8 +350,10 @@ angular.module('angular-svg-round-progress')
                 });
             }
 
+
             return angular.extend(base, {
                 link: function(scope, element){
+
                     var isNested    = !element.hasClass('round-progress-wrapper');
                     var svg         = isNested ? element : element.find('svg').eq(0);
                     var ring        = svg.find('path').eq(0);
@@ -361,6 +365,7 @@ angular.module('angular-svg-round-progress')
                     scope.getOptions = function(){
                         return options;
                     };
+
 
                     var renderCircle = function(){
                         var isSemicircle     = options.semi;
@@ -463,9 +468,57 @@ angular.module('angular-svg-round-progress')
                     var keys = Object.keys(base.scope).filter(function(key){
                         return key !== 'current';
                     });
+                        
+                    var timenow = new Date().getTime();
+
+                    if ((scope.max - timenow) > 0) {
+                        scope.max = scope.max - scope.posted;
+                        scope.current = timenow - scope.posted;
+                        
+                        
+                        $interval(function () {
+                            if (scope.current/scope.max*100 >= 70) {
+                                scope.color = "#e74c3c";
+                            } else if (scope.current/scope.max*100 > 40  && scope.current/scope.max*100 < 70 ) {
+                                scope.color = "#f1c40f";
+                            } else if (scope.current/scope.max*100 <= 40) {
+                                
+                            }
+                            
+                            timenow = new Date().getTime();
+                            scope.current = timenow - scope.posted;
+
+                            renderCircle();
+                            scope.$broadcast('$parentOffsetChanged');
+
+                            // it doesn't have to listen for changes on the parent unless it inherits
+                            if(options.offset === 'inherit' && !parentChangedListener){
+                                parentChangedListener = scope.$on('$parentOffsetChanged', function(){
+                                    renderState(scope.current, scope.current, true);
+                                    renderCircle();
+                                });
+                            }else if(options.offset !== 'inherit' && parentChangedListener){
+                                parentChangedListener();
+                            }
+                            
+                            // scope.current = scope.current+1;
+
+                            // if (scope.max<=scope.current) {
+                            //     $interval.cancel(true);
+                            // }
+
+                            // console.log("difference calcelated");
+                        }, 100);
+
+                    } else {
+                        scope.max = 10;
+                        scope.current = 0;
+                    }
+
 
                     // properties that are used only for presentation
                     scope.$watchGroup(keys, function(newValue){
+                        // console.log("change")
                         for(var i = 0; i < newValue.length; i++){
                             if(typeof newValue[i] !== 'undefined'){
                                 options[keys[i]] = newValue[i];
@@ -492,22 +545,6 @@ angular.module('angular-svg-round-progress')
                         renderState(service.toNumber(newValue[0]), service.toNumber(oldValue[0]));
                     });
 
-                    $interval(function () {
-                        if (scope.current/scope.max*100 >= 70) {
-                            scope.current = scope.current+1;
-                            scope.color = "#e74c3c";
-                        } else if (scope.current/scope.max*100 > 40  && scope.current/scope.max*100 < 70 ) {
-                            scope.color = "#f1c40f";
-                            scope.current = scope.current+1;
-                        } else if (scope.current/scope.max*100 <= 40) {
-                            scope.current = scope.current+1;
-                            
-                        }
-
-                        if (scope.max==scope.current) {
-                            $interval.cancel(true);
-                        };
-                    }, 100);
                 },
                 template: function(element){
                     var parent = element.parent();

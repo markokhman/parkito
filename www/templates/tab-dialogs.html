@@ -1,22 +1,32 @@
 <ion-view view-title="Chats" >
+    <ion-nav-buttons side="primary">
+      <button class="button button-clear button-positive" ng-click="showProfilePopup()">
+        <i class="icon ion-person"></i> Profile 
+      </button>
+    </ion-nav-buttons>
+    <ion-nav-buttons side="secondary">
+      <button class="button button-clear button-positive" ng-click="openModal()">
+        <i class="icon ion-location"></i> Find chats
+      </button>
+    </ion-nav-buttons>
   <ion-content hide-tabs='true'>
 
     <ion-list>
+      <div class="item item-divider">
+        TLV
+        <i class="icon ion-help-circled positive" style="float: right;"></i>
+      </div>
       <ion-item class="item-remove-animate item-avatar item-icon-right" ng-repeat="chat in chats" type="item-text-wrap" href="#/tab/dialogs/{{chat.$id}}/{{chat.$value}}">
         <img ng-src="{{chat.face}}">
         <h2>{{chat.$value}}</h2>
         <!-- <p>{{chat.lastText}}</p> -->
         <i class="icon ion-chevron-right icon-accessory"></i>
 
-        <ion-option-button class="button-assertive" ng-click="remove(chat)">
+        <!-- <ion-option-button class="button-assertive" ng-click="remove(chat)">
           Delete
-        </ion-option-button>
+        </ion-option-button> -->
 
       </ion-item>
-        <!-- <div id="map" style="width: 400px; height: 200px;" data-tap-disabled="true"></div> -->
     </ion-list>
   </ion-content>
-  <button ng-click="openModal()" style="position:absolute; width:80%; bottom:35px; right:0; left:0; margin:auto; z-index:1000;" class="button button-large button-positive">
-    <i class="icon ion-map"></i> Find parking chats
-  </button>
-</ion-view>
+ </ion-view>

@@ -1,6 +1,7 @@
 angular.module('starter.controllers', ['auth'])
 
 .controller('DashCtrl', function($scope, AuthService, Session, $timeout, INFO, $rootScope) {
+ 
  if (window.localStorage.getItem(INFO.applicationNAME+"User") != null) {
       Session.create(JSON.parse(window.localStorage.getItem(INFO.applicationNAME+"User")));
       $scope.user = Session.user;
@@ -9,11 +10,12 @@ angular.module('starter.controllers', ['auth'])
     AuthService.showLoginPopup();
   }
 
-$rootScope.$on('auth-login-success', function () {
+  $rootScope.$on('auth-login-success', function () {
     $scope.user = Session.user;
   });
   $rootScope.$on('auth-logout-success', function () {
     $scope.user = null;
+    AuthService.showProfilePopup();
   });
 
   $scope.showProfilePopup = function () {

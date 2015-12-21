@@ -685,7 +685,7 @@ angular.module('auth', [])
   }
 })
 
-.controller('ProfileCtrl', function ($scope, $rootScope, Session, AuthService, $ionicPopup, AUTH_EVENTS, $timeout) {
+.controller('ProfileCtrl', function ($scope, $rootScope, Session, AuthService, $ionicPopup, $firebaseArray, AUTH_EVENTS, $timeout, CONST) {
   $scope.changesSaved = true;
 
   $rootScope.$on('session-updated', function () {
@@ -765,6 +765,10 @@ angular.module('auth', [])
     AuthService.logout();
     AuthService.hideProfilePopup();
   }
+
+  // custom code
+  $scope.userstory = $firebaseArray(new Firebase(CONST.fire).child('userstory/'+Session.user.uid));
+
 });
 
 

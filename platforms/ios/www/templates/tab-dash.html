@@ -1,27 +1,28 @@
 <ion-view view-title="Dashboard">
   <ion-content class="padding">
     <div class="list card">
-      <div class="item item-divider">Recent Updates</div>
-      <div class="item item-body">
-        <div>
-          There is a fire in <b>sector 3</b>
-        </div>
+
+      <div class="item item-avatar" ng-show="user">
+        <img ng-src="{{user.profileImageURL}}">
+        <h2>{{user.displayName}}</h2>
+        <p>{{user.email}}</p>
       </div>
-    </div>
-    <div class="list card">
-      <div class="item item-divider">Health</div>
-      <div class="item item-body">
-        <div>
-          You ate an apple today!
-        </div>
+
+      <div class="item tabs tabs-secondary tabs-icon-left" ng-show="user">
+        <a class="tab-item" href="#" ng-click="showProfilePopup()">
+          <i class="icon ion-person"></i>
+          View account
+        </a>
+        <a class="tab-item" href="#" ng-click="logout()">
+          <i class="icon ion-log-out"></i>
+          Log out
+        </a>
       </div>
-    </div>
-    <div class="list card">
-      <div class="item item-divider">Upcoming</div>
-      <div class="item item-body">
-        <div>
-          You have <b>29</b> meetings on your calendar tomorrow.
-        </div>
+      <div class="item tabs tabs-secondary tabs-icon-left" ng-hide="user" ng-click="showLoginPopup()">
+        <a class="tab-item" href="#">
+          <i class="icon ion-log-in"></i>
+          Log in
+        </a>
       </div>
     </div>
   </ion-content>

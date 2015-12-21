@@ -76,8 +76,27 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 	
 })
 
-.controller('DialogDetailCtrl', function($scope, $stateParams, $firebaseArray, CONST, $ionicLoading, $rootScope, $ionicModal, $ionicScrollDelegate, $ionicPopup) {
-	
+.controller('DialogDetailCtrl', function($scope, $window, $stateParams, $firebaseArray, CONST, $ionicLoading, AuthService, $rootScope, $ionicModal, $state, Session, $ionicScrollDelegate, $ionicPopup) {
+
+	// auth functionality
+
+	$rootScope.$on('auth-login-success', function () {
+		$scope.user = Session.user;
+	});
+	$rootScope.$on('auth-logout-success', function () {
+		$scope.user = null;
+	});
+
+	$scope.showProfilePopup = function () {
+		AuthService.showProfilePopup();
+	}
+	$scope.showLoginPopup = function () {
+		AuthService.showLoginPopup();
+	}
+	$scope.logout = function () {
+		AuthService.logout();
+	}
+
 	// Loading spin
 	$ionicLoading.show({
       template: 'Loading the beauty...'
@@ -85,7 +104,15 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 
 	// Acess the chat name and connect to reference with chatcontents
     $scope.name = $stateParams.name;
-	var chatRef = new Firebase(CONST.fire).child("chatcontents/"+$stateParams.id);
+    $scope.chatid = $stateParams.id;
+    $scope.timeNow = new Date().getTime();
+
+    if (Session.user) {
+    	$scope.user = Session.user;
+    }
+
+
+	var chatRef = new Firebase(CONST.fire).child("chatcontents/"+$scope.chatid);
 	var query = chatRef.orderByChild("timestamp");
 	
 	$scope.messages = $firebaseArray(query);
@@ -101,27 +128,23 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 	});
 
 	// Post a parking spot
-	$scope.postSpot = function () {
-		var message = {
-			mestype: "text",
-			mestext: "trolololo",
-			timestamp: Firebase.ServerValue.TIMESTAMP
-		}
-		$scope.messages.$add(message).then(function(ref) {
-		    var id = ref.key();
-		    $scope.messages[$scope.messages.$indexFor(id)].mesid = id;
-		    $scope.messages.$save($scope.messages.$indexFor(id));
-			$ionicScrollDelegate.scrollBottom();
-		});
-	}
+	// $scope.postSpot = function () {
+		
+	// 	$scope.messages.$add(message).then(function(ref) {
+	// 	    var id = ref.key();
+	// 	    $scope.messages[$scope.messages.$indexFor(id)].mesid = id;
+	// 	    $scope.messages.$save($scope.messages.$indexFor(id));
+	// 		$ionicScrollDelegate.scrollBottom();
+	// 	});
+	// }
 
 	// Triggered on a button click, or some other target
-	$scope.takeSpot = function() {
+	$scope.takeSpot = function(spot) {
 
 		  // An elaborate, custom popup
 		  var myPopup = $ionicPopup.show({
 		    template: "",
-		    title: 'Do you want to take this spot?',
+		    title: 'Do you want to take this spot on '+spot.formatted_address+'?',
 		    subTitle: 'We will navigate You with WAZE app',
 		    scope: $scope,
 		    buttons: [
@@ -142,7 +165,22 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 
 		  myPopup.then(function(res) {
 		  	if (res) {
+		  		spot.taken = true;
+		  		$scope.messages.$save($scope.messages.$indexFor(spot.$id));
+		  		// spot.$save();
+		  		// console.log($scope.messages.$keyAt(spot));
 		    	console.log('Redirected to WAZE!', res);
+
+		    	// spot.posted = false;
+				var storyRef = new Firebase(CONST.fire).child("userstory/"+Session.user.uid);
+				var recentSpot = storyRef.push();
+				recentSpot.set({
+					id : spot.$id,
+					name : spot.name,
+					posted : false
+				});
+		    	window.open("waze://?ll="+spot.coordinates.lat+","+spot.coordinates.lng+"&navigate=yes", "_system");
+		    	// waze://?ll=<lat>,<lon>&navigate=yes
 		    	// $rootScope.closeModal();
 		  	};
 		  });
@@ -180,6 +218,14 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 			mestype: "thanks",
 			timestamp: Firebase.ServerValue.TIMESTAMP
 		}
+
+		if (Session.user) {
+			message.user = {
+				displayName : Session.user.displayName,
+				profileImageURL : Session.user.profileImageURL,
+				uid : Session.user.uid
+			}
+		}
 		$scope.messages.$add(message).then(function(ref) {
 		    var id = ref.key();
 		    $scope.messages[$scope.messages.$indexFor(id)].mesid = id;
@@ -190,7 +236,7 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 
 	// $scope.postThanks();
 })
-.controller('ModalCtrl', function($scope, $rootScope, NgMap, $ionicPopup, $ionicModal, $timeout) {
+.controller('ModalCtrl', function($scope, $rootScope, NgMap, $ionicPopup, $ionicModal, $timeout, CONST, Session) {
 
 	NgMap.getMap().then(function(map) {
 		// current position
@@ -228,7 +274,8 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 			      if (results[1]) {
 			      	// console.log(results[0].formatted_address)
 			        // $scope.address = results[0].formatted_address;
-			        $scope.spot.formatted_address = results[0].formatted_address;
+			        var full_address = results[0].formatted_address;
+			        $scope.spot.formatted_address = full_address.substring(0, full_address.indexOf(','));
 			        $scope.spot.coordinates = {lat: coordinates.lat(), lng: coordinates.lng()};
 
 			        $scope.$apply();
@@ -244,7 +291,7 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 
 	    // if not
 	    function error(err) {
-	      alert('ERROR(' + err.code + '): ' + err.message);
+	      console.log('ERROR(' + err.code + '): ' + err.message);
 	    };
 
 	    navigator.geolocation.getCurrentPosition(success, error, options);    
@@ -273,20 +320,49 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 		        type: 'button-positive',
 		        onTap: function(e) {
 		        	if ($scope.spot.waitingtime) {
-		            	return $scope.spot;
+						var now = new Date().getTime();
+
+						$scope.spot.mestype = "spot";
+						$scope.spot.name = $scope.name;
+						$scope.spot.taken = false;
+						$scope.spot.timeposted = now;
+						$scope.spot.timedeadline = now + (1000 * 60 * $scope.spot.waitingtime);
+						$scope.spot.timestamp = Firebase.ServerValue.TIMESTAMP;
+
+						if (Session.user) {
+							$scope.spot.user = {
+								displayName : Session.user.displayName,
+								profileImageURL : Session.user.profileImageURL,
+								uid : Session.user.uid
+							}
+						}
+
+		            	
+						var chatRef = new Firebase(CONST.fire).child("chatcontents/"+$scope.chatid);
+						var newSpot = chatRef.push();
+						newSpot.set($scope.spot);
+
+						$scope.spot.posted = true;
+						var storyRef = new Firebase(CONST.fire).child("userstory/"+Session.user.uid);
+						var recentSpot = storyRef.push();
+						recentSpot.set($scope.spot);
+	            		return true;
+
 		        	};
 		        }
 		      }
 		    ]
 		  });
 
-		  myPopup.then(function(res) {
+		myPopup.then(function(res) {
 		  	if (res) {
-		    	console.log('Pseudo Posted!', res);
-		    	$rootScope.closeModal();
-		  	};
-		  });
-	};
+				console.log("Posted");
+				$rootScope.closeModal();
+		  	} else {
+		  		$rootScope.closeModal();
+		  	}
+		});
+	}
 
 })
 .controller('ViewmapCtrl', function ($scope, $rootScope, NgMap, $firebaseArray, CONST, $state, $ionicLoading) {
