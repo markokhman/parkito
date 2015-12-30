@@ -5,7 +5,7 @@
 // the 2nd parameter is an array of 'requires'
 // 'starter.services' is found in services.js
 // 'starter.controllers' is found in controllers.js
-angular.module('starter', ['ionic', 'starter.controllers', 'starter.services','dialog-controllers'])
+angular.module('starter', ['ionic', 'starter.controllers', 'starter.services','dialog-controllers','ionic.service.core','ionic.service.push'])
 
 .run(function($ionicPlatform) {
   $ionicPlatform.ready(function() {
@@ -14,6 +14,8 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services','d
     if (window.cordova && window.cordova.plugins && window.cordova.plugins.Keyboard) {
       cordova.plugins.Keyboard.hideKeyboardAccessoryBar(true);
       cordova.plugins.Keyboard.disableScroll(true);
+
+
 
     }
     if (window.StatusBar) {
@@ -28,6 +30,13 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services','d
 })
 
 .config(function($stateProvider, $urlRouterProvider) {
+
+  var io = Ionic.io();
+  // $ionicAppProvider.identify({
+  //   app_id: '6e452d9b',
+  //   api_key: '0f931f61ff534780911a27cc74d4fa4e175c37c99abf8123',
+  //   dev_push: true
+  // });
 
   // Ionic uses AngularUI Router which uses the concept of states
   // Learn more here: https://github.com/angular-ui/ui-router

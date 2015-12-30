@@ -48,14 +48,5 @@
         </a>
       </div>
     </div>
-    <!-- custom code -->
-    <div class="card">
-      <div class="item item-divider">
-        Recent activity
-      </div>
-      <div ng-repeat="message in userstory" class="item item-text-wrap">
-        <b ng-show="message.posted">Posted spot to</b><b ng-show="!message.posted">Got a spot in</b> {{message.name}}
-      </div>
-    </div>
   </ion-content>
 </ion-modal-view>

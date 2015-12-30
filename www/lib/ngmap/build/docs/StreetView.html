@@ -101,6 +101,18 @@
                 <a href="NgMap.html">NgMap</a>
               </li>
             </ul>
+          </ul><ul class="group">
+            <h3>
+              <a href="" ng-click="undefinedfactory = !undefinedfactory">
+                factory
+              </a>
+              <i ng-cloak="" ng-show="undefinedfactory">+</i>
+            </h3>
+            <ul ng-hide="undefinedfactory">
+              <li>
+                <a href="NgMapPool.html">NgMapPool</a>
+              </li>
+            </ul>
           </ul>
         </li>
       </ul><ul class="module">
@@ -226,7 +238,19 @@
             </div>
             <div>
               <h5>Returns:</h5>
-              <div class="param-desc"><p>Future object</p></div>
+              <table class="params">
+                <thead>
+                  <tr><th>Type</th><th class="last">Description</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="type"><span class="param-type">
+                      HttpPromise
+                    </span></td>
+                    <td class="description last"><p>Future object</p></td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </dd>
         </dl><dl>

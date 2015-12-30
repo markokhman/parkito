@@ -9,14 +9,13 @@ angular.module('ngMap', []);
   var Attr2MapOptions;
 
   var __MapController = function(
-      $scope, $element, $attrs, $parse, _Attr2MapOptions_, NgMap
+      $scope, $element, $attrs, $parse, _Attr2MapOptions_, NgMap, NgMapPool
     ) {
     Attr2MapOptions = _Attr2MapOptions_;
     var vm = this;
 
     vm.mapOptions; /** @memberof __MapController */
     vm.mapEvents;  /** @memberof __MapController */
-    vm.ngMapDiv;   /** @memberof __MapController */
 
     /**
      * Add an object to the collection of group
@@ -40,8 +39,7 @@ angular.module('ngMap', []);
             vm.map.setCenter(obj.position);
           }
           (groupName == 'markers') && vm.objectChanged('markers');
-          (groupName == 'customMarkers')
-            && vm.objectChanged('customMarkers');
+          (groupName == 'customMarkers') && vm.objectChanged('customMarkers');
         }
       }
     };
@@ -58,15 +56,17 @@ angular.module('ngMap', []);
       if (obj.map) {
         var objs = obj.map[groupName];
         for (var name in objs) {
-          objs[name] === obj && (delete objs[name]);
+          if (objs[name] === obj) {
+            google.maps.event.clearInstanceListeners(obj);
+            delete objs[name];
+          }
         }
 
         /* delete from map */
         obj.map && obj.setMap && obj.setMap(null);
 
         (groupName == 'markers') && vm.objectChanged('markers');
-        (groupName == 'customMarkers')
-          && vm.objectChanged('customMarkers');
+        (groupName == 'customMarkers') && vm.objectChanged('customMarkers');
       }
     };
 
@@ -111,7 +111,7 @@ angular.module('ngMap', []);
      * @param {String} group name of group e.g., markers
      */
     vm.objectChanged = function(group) {
-      if (
+      if ( vm.map &&
         (group == 'markers' || group == 'customMarkers') &&
         vm.map.zoomToIncludeMarkers == 'auto'
       ) {
@@ -129,26 +129,37 @@ angular.module('ngMap', []);
      */
     vm.initializeMap = function() {
       var mapOptions = vm.mapOptions,
-          mapEvents = vm.mapEvents,
-          ngMapDiv = vm.ngMapDiv;
+          mapEvents = vm.mapEvents;
 
       var lazyInitMap = vm.map; //prepared for lazy init
-      vm.map = new google.maps.Map(ngMapDiv, {});
+      vm.map = NgMapPool.getMapInstance($element[0]);
+      NgMap.setStyle($element[0]);
 
       // set objects for lazyInit
       if (lazyInitMap) {
+
+        /**
+         * rebuild mapOptions for lazyInit
+         * becasue attributes values might have been changed
+         */
+        var filtered = Attr2MapOptions.filter($attrs);
+        var options = Attr2MapOptions.getOptions(filtered);
+        var controlOptions = Attr2MapOptions.getControlOptions(filtered);
+        mapOptions = angular.extend(options, controlOptions);
+        void 0;
+
         for (var group in lazyInitMap) {
           var groupMembers = lazyInitMap[group]; //e.g. markers
           if (typeof groupMembers == 'object') {
             for (var id in groupMembers) {
-              vm.addObject(group, groupMembers[id]); 
+              vm.addObject(group, groupMembers[id]);
             }
           }
         }
         vm.map.showInfoWindow = vm.showInfoWindow;
         vm.map.hideInfoWindow = vm.hideInfoWindow;
       }
-      
+
       // set options
       mapOptions.zoom = mapOptions.zoom || 15;
       var center = mapOptions.center;
@@ -204,17 +215,15 @@ angular.module('ngMap', []);
      */
     var orgAttrs = Attr2MapOptions.orgAttributes($element);
     var filtered = Attr2MapOptions.filter($attrs);
-    var options = Attr2MapOptions.getOptions(filtered, null, $scope);
+    var options = Attr2MapOptions.getOptions(filtered, {scope: $scope});
     var controlOptions = Attr2MapOptions.getControlOptions(filtered);
     var mapOptions = angular.extend(options, controlOptions);
     var mapEvents = Attr2MapOptions.getEvents($scope, filtered);
+    void 0;
+    Object.keys(mapEvents).length && void 0;
 
     vm.mapOptions = mapOptions;
     vm.mapEvents = mapEvents;
-
-    // create html <div> for map
-    vm.ngMapDiv = NgMap.getNgMapDiv($element[0]);
-    $element.append(vm.ngMapDiv);
 
     if (options.lazyInit) { // allows controlled initialization
       vm.map = {id: $attrs.id}; //set empty, not real, map
@@ -223,13 +232,19 @@ angular.module('ngMap', []);
       vm.initializeMap();
     }
 
+    //Trigger Resize
+    if(options.triggerResize) {
+      google.maps.event.trigger(vm.map, 'resize');
+    }
+
     $element.bind('$destroy', function() {
+      NgMapPool.returnMapInstance(vm.map);
       NgMap.deleteMap(vm);
     });
   }; // __MapController
 
   __MapController.$inject = [
-    '$scope', '$element', '$attrs', '$parse', 'Attr2MapOptions', 'NgMap'
+    '$scope', '$element', '$attrs', '$parse', 'Attr2MapOptions', 'NgMap', 'NgMapPool'
   ];
   angular.module('ngMap').controller('__MapController', __MapController);
 })();
@@ -342,10 +357,8 @@ angular.module('ngMap', []);
     }
 
     mapController.addObject('customControls', customControlEl);
-    NgMap.getMap().then(function(map) {
-      var position = options.position;
-      map.controls[google.maps.ControlPosition[position]].push(customControlEl);
-    });
+    var position = options.position;
+    mapController.map.controls[google.maps.ControlPosition[position]].push(customControlEl);
 
   };
 
@@ -784,6 +797,13 @@ angular.module('ngMap', []);
           rectangleOptions:options.rectangleoptions
         });
 
+        //Observers
+        attrs.$observe('drawingControlOptions', function (newValue) {
+          drawingManager.drawingControlOptions = parser.getControlOptions({drawingControlOptions: newValue}).drawingControlOptions;
+          drawingManager.setDrawingMode(null);
+          drawingManager.setMap(mapController.map);
+        });
+
 
         /**
          * set events
@@ -793,6 +813,10 @@ angular.module('ngMap', []);
         }
 
         mapController.addObject('mapDrawingManager', drawingManager);
+
+        element.bind('$destroy', function() {
+          mapController.deleteObject('mapDrawingManager', drawingManager);
+        });
       }
     }; // return
   }]);
@@ -1091,7 +1115,19 @@ angular.module('ngMap', []);
           var id = typeof p1 == 'string' ? p1 : p2;
           var marker = typeof p1 == 'string' ? p2 : p3;
           if (typeof marker == 'string') {
-            marker = mapController.map.markers[marker];
+            //Check if markers if defined to avoid odd 'undefined' errors
+            if (typeof mapController.map.markers != "undefined"
+                && typeof mapController.map.markers[marker] != "undefined") {
+              marker = mapController.map.markers[marker];
+            } else if (
+                //additionally check if that marker is a custom marker
+            typeof mapController.map.customMarkers
+            && typeof mapController.map.customMarkers[marker] != "undefined") {
+              marker = mapController.map.customMarkers[marker];
+            } else {
+              //Better error output if marker with that id is not defined
+              throw new Error("Cant open info window for id " + marker + ". Marker or CustomMarker is not defined")
+            }
           }
 
           var infoWindow = mapController.map.infoWindows[id];
@@ -1418,7 +1454,7 @@ angular.module('ngMap', []);
  * Initialize a Google map within a `<div>` tag
  *   with given options and register events
  *
- * @attr {Expression} map-initialized 
+ * @attr {Expression} map-initialized
  *   callback function when map is initialized
  *   e.g., map-initialized="mycallback(map)"
  * @attr {Expression} geo-callback if center is an address or current location,
@@ -1445,6 +1481,8 @@ angular.module('ngMap', []);
  *  When true the map will only display one info window at the time,
  *  if not set or false,
  *  everytime an info window is open it will be displayed with the othe one.
+ * @attr {Boolean} trigger-resize
+ *  Default to false.  Set to true to trigger resize of the map.  Needs to be done anytime you resize the map
  * @example
  * Usage:
  *   <map MAP_OPTIONS_OR_MAP_EVENTS ..>
@@ -2326,6 +2364,14 @@ angular.module('ngMap', []);
         } // catch(err2)
       } // catch(err)
 
+      // convert output more for center and position
+      if (
+        (options.key == 'center' || options.key == 'center') &&
+        output instanceof Array
+      ) {
+        output = new google.maps.LatLng(output[0], output[1]);
+      }
+
       // convert output more for shape bounds
       if (options.key == 'bounds' && output instanceof Array) {
         output = new google.maps.LatLngBounds(output[0], output[1]);
@@ -2684,6 +2730,86 @@ angular.module('ngMap', []);
 })();
 
 /**
+ * @ngdoc factory
+ * @name NgMapPool
+ * @description
+ *   Provide map instance to avoid memory leak
+ */
+(function() {
+  'use strict';
+  /**
+   * @memberof NgMapPool
+   * @desc map instance pool
+   */
+  var mapInstances = [];
+  var $window, $document;
+
+  var add = function(el) {
+    var mapDiv = $document.createElement("div");
+    mapDiv.style.width = "100%";
+    mapDiv.style.height = "100%";
+    el.appendChild(mapDiv);
+    var map = new $window.google.maps.Map(mapDiv, {});
+    mapInstances.push(map);
+    return map;
+  };
+
+  var find = function(el) { //jshint ignore:line
+    var notInUseMap;
+    for (var i=0; i<mapInstances.length; i++) {
+      var map = mapInstances[i];
+      if (!map.inUse) {
+        var mapDiv = map.getDiv();
+        el.appendChild(mapDiv);
+        notInUseMap = map;
+        break;
+      }
+    }
+    return notInUseMap;
+  };
+
+  /**
+   * @memberof NgMapPool
+   * @function getMapInstance
+   * @param {HtmlElement} el map container element
+   * @return map instance for the given element
+   */
+  var getMapInstance = function(el) {
+    var map = find(el);
+    if (!map) {
+      map = add(el);
+    }
+    map.inUse = true;
+    return map;
+  };
+
+  /**
+   * @memberof NgMapPool
+   * @function returnMapInstance
+   * @param {Map} an instance of google.maps.Map
+   * @desc sets the flag inUse of the given map instance to false, so that it 
+   * can be reused later
+   */
+  var returnMapInstance = function(map) {
+    map.inUse = false;
+  };
+
+  var NgMapPool = function(_$document_, _$window_) {
+    $document = _$document_[0], $window = _$window_;
+
+    return {
+      mapInstances: mapInstances,
+      getMapInstance: getMapInstance,
+      returnMapInstance: returnMapInstance
+    };
+  };
+  NgMapPool.$inject = [ '$document', '$window' ];
+
+  angular.module('ngMap').factory('NgMapPool', NgMapPool);
+
+})();
+
+/**
  * @ngdoc provider
  * @name NgMap
  * @description
@@ -2695,6 +2821,18 @@ angular.module('ngMap', []);
   var NavigatorGeolocation, Attr2MapOptions, GeoCoder, camelCaseFilter;
 
   var mapControllers = {};
+
+  var getStyle = function(el, styleProp) {
+    var y;
+    if (el.currentStyle) {
+      y = el.currentStyle[styleProp];
+    } else if ($window.getComputedStyle) {
+      y = $document.defaultView.
+        getComputedStyle(el, null).
+        getPropertyValue(styleProp);
+    }
+    return y;
+  };
 
   /**
    * @memberof NgMap
@@ -2747,8 +2885,10 @@ angular.module('ngMap', []);
    * @returns promise
    */
   var addMap = function(mapCtrl) {
-    var len = Object.keys(mapControllers).length;
-    mapControllers[mapCtrl.map.id || len] = mapCtrl;
+    if (mapCtrl.map) {
+      var len = Object.keys(mapControllers).length;
+      mapControllers[mapCtrl.map.id || len] = mapCtrl;
+    }
   };
 
   /**
@@ -2758,62 +2898,12 @@ angular.module('ngMap', []);
    */
   var deleteMap = function(mapCtrl) {
     var len = Object.keys(mapControllers).length - 1;
-    delete mapControllers[mapCtrl.map.id || len];
-  };
-
-  /**
-   * @memberof NgMap
-   * @function getStyle
-   * @param {HTMLElemnet} el html element
-   * @param {String} styleProp style property name e.g. 'display'
-   * @returns value of property
-   */
-  var getStyle = function(el, styleProp) {
-    var y;
-    if (el.currentStyle) {
-      y = el.currentStyle[styleProp];
-    } else if ($window.getComputedStyle) {
-      y = $document.defaultView.
-        getComputedStyle(el, null).
-        getPropertyValue(styleProp);
-    }
-    return y;
-  };
-
-  /**
-   * @memberof NgMap
-   * @function getNgMapDiv
-   * @param {HTMLElemnet} el html element
-   * @returns map DIV elemnt
-   * @desc
-   * create a new `div` inside map tag, so that it does not touch map element
-   * and disable drag event for the elmement
-   */
-  var getNgMapDiv = function(ngMapEl) {
-    var el = $document.createElement("div");
-    var defaultStyle = ngMapEl.getAttribute('default-style');
-    el.style.width = "100%";
-    el.style.height = "100%";
-
-    //if style is not given to the map element, set display and height
-    if (defaultStyle == "true") {
-        ngMapEl.style.display = 'block';
-        ngMapEl.style.height = '300px';
-    } else {
-      if (getStyle(ngMapEl, 'display') != "block") {
-        ngMapEl.style.display = 'block';
-      }
-      if (getStyle(ngMapEl, 'height').match(/^(0|auto)/)) {
-        ngMapEl.style.height = '300px';
-      }
-    }
-
-    // disable drag event
-    el.addEventListener('dragstart', function (event) {
-      event.preventDefault();
-      return false;
+    var mapId = mapCtrl.map.id || len;
+    mapCtrl.map.controls.forEach(function(ctrl) {
+      ctrl.clear();
     });
-    return el;
+    //delete mapCtrl.map;
+    delete mapControllers[mapId];
   };
 
   /**
@@ -2859,11 +2949,13 @@ angular.module('ngMap', []);
    * @returns attribue observe function
    */
   var observeAndSet = function(attrName, object) {
+    void 0;
     return function(val) {
       if (val) {
         var setMethod = camelCaseFilter('set-'+attrName);
         var optionValue = Attr2MapOptions.toOptionValue(val, {key: attrName});
         if (object[setMethod]) { //if set method does exist
+          void 0;
           /* if an location is being observed */
           if (attrName.match(/center|position/) &&
             typeof optionValue == 'string') {
@@ -2878,9 +2970,30 @@ angular.module('ngMap', []);
     };
   };
 
+  /**
+   * @memberof NgMap
+   * @function setStyle
+   * @param {HtmlElement} map contriner element
+   * @desc set display, width, height of map container element
+   */
+  var setStyle = function(el) {
+    //if style is not given to the map element, set display and height
+    var defaultStyle = el.getAttribute('default-style');
+    if (defaultStyle == "true") {
+      el.style.display = 'block';
+      el.style.height = '300px';
+    } else {
+      if (getStyle(el, 'display') != "block") {
+        el.style.display = 'block';
+      }
+      if (getStyle(el, 'height').match(/^(0|auto)/)) {
+        el.style.height = '300px';
+      }
+    }
+  };
+
   angular.module('ngMap').provider('NgMap', function() {
     var defaultOptions = {};
-    var useTinfoilShielding = false;
 
     /**
      * @memberof NgMap
@@ -2918,8 +3031,7 @@ angular.module('ngMap', []);
         deleteMap: deleteMap,
         getMap: getMap,
         initMap: initMap,
-        getStyle: getStyle,
-        getNgMapDiv: getNgMapDiv,
+        setStyle: setStyle,
         getGeoLocation: getGeoLocation,
         observeAndSet: observeAndSet
       };

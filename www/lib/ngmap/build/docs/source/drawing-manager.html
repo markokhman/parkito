@@ -102,6 +102,18 @@
                 <a href="NgMap.html">NgMap</a>
               </li>
             </ul>
+          </ul><ul class="group">
+            <h3>
+              <a href="" ng-click="undefinedfactory = !undefinedfactory">
+                factory
+              </a>
+              <i ng-cloak="" ng-show="undefinedfactory">+</i>
+            </h3>
+            <ul ng-hide="undefinedfactory">
+              <li>
+                <a href="NgMapPool.html">NgMapPool</a>
+              </li>
+            </ul>
           </ul>
         </li>
       </ul><ul class="module">
@@ -212,6 +224,12 @@
           polylineOptions:options.polylineoptions,
           rectangleOptions:options.rectangleoptions
         });
+        //Observers
+        attrs.$observe('drawingControlOptions', function (newValue) {
+          drawingManager.drawingControlOptions = parser.getControlOptions({drawingControlOptions: newValue}).drawingControlOptions;
+          drawingManager.setDrawingMode(null);
+          drawingManager.setMap(mapController.map);
+        });
         /**
          * set events
          */
@@ -219,6 +237,9 @@
           google.maps.event.addListener(drawingManager, eventName, events[eventName]);
         }
         mapController.addObject('mapDrawingManager', drawingManager);
+        element.bind('$destroy', function() {
+          mapController.deleteObject('mapDrawingManager', drawingManager);
+        });
       }
     }; // return
   }]);

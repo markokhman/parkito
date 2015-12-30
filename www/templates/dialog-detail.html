@@ -14,11 +14,13 @@
         <img ng-show="message.mestype=='thanks'" src="img/thanks.png" style="width:70px;">
         <h2 ng-show="message.mestype=='spot'">{{message.formatted_address}}</h2>
         <p style="font-style: italic; font-size: 10px">{{message.user.displayName}}</p>
-        <div ng-show="message.mestype=='spot' && !message.taken" ng-click="takeSpot(message)" style="width: 12%; position: absolute; right: 4px; top: 15px;">
+        <div ng-show="message.mestype=='spot' && !message.taken && message.timedeadline!=10 && message.user.uid!=user.uid" ng-click="takeSpot(message)" style="width: 12%; position: absolute; right: 4px; top: 15px;">
           <div
             round-progress
             posted="message.timeposted"
             max="message.timedeadline"
+            id="message.$id"
+            chat="chatid"
             current="timeposted"
             color="#2ecc71"
             bgcolor="#eaeaea"

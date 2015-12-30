@@ -5,28 +5,17 @@
       </button>
     </ion-nav-buttons>
     <ion-nav-buttons side="secondary">
-      <button class="button button-clear button-positive" ng-click="openModal()">
-        <i class="icon ion-location"></i> Find chats
-      </button>
+      <!-- <button class="button button-clear button-positive" ng-click="openModal()"> -->
+        <!-- <i class="icon ion-location"></i> Find chats -->
+      <!-- </button> -->
     </ion-nav-buttons>
   <ion-content hide-tabs='true'>
-
-    <ion-list>
-      <div class="item item-divider">
-        TLV
-        <i class="icon ion-help-circled positive" style="float: right;"></i>
-      </div>
-      <ion-item class="item-remove-animate item-avatar item-icon-right" ng-repeat="chat in chats" type="item-text-wrap" href="#/tab/dialogs/{{chat.$id}}/{{chat.$value}}">
-        <img ng-src="{{chat.face}}">
-        <h2>{{chat.$value}}</h2>
-        <!-- <p>{{chat.lastText}}</p> -->
-        <i class="icon ion-chevron-right icon-accessory"></i>
-
-        <!-- <ion-option-button class="button-assertive" ng-click="remove(chat)">
-          Delete
-        </ion-option-button> -->
-
-      </ion-item>
-    </ion-list>
+    <button ng-click="findspot()" class="button button-positive">
+      Find
+    </button>
+    <br>
+    <button ng-click="postSpot()" class="button button-calm">
+      Post
+    </button>
   </ion-content>
  </ion-view>

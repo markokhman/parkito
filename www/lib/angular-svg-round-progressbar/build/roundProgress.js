@@ -329,7 +329,9 @@ angular.module('angular-svg-round-progress')
                     posted:        "=",
                     current:        "=",
                     max:            "=",
+                    id:            "=",
                     semi:           "=",
+                    chat:           "=",
                     rounded:        "=",
                     clockwise:      "=",
                     responsive:     "=",
@@ -476,7 +478,7 @@ angular.module('angular-svg-round-progress')
                         scope.current = timenow - scope.posted;
                         
                         
-                        $interval(function () {
+                        var theint = $interval(function () {
                             if (scope.current/scope.max*100 >= 70) {
                                 scope.color = "#e74c3c";
                             } else if (scope.current/scope.max*100 > 40  && scope.current/scope.max*100 < 70 ) {
@@ -503,9 +505,13 @@ angular.module('angular-svg-round-progress')
                             
                             // scope.current = scope.current+1;
 
-                            // if (scope.max<=scope.current) {
-                            //     $interval.cancel(true);
-                            // }
+                            if (scope.max<=scope.current) {
+                                var chatRef = new Firebase("https://parkito.firebaseio.com").child("chatcontents/"+scope.chat+"/"+scope.id+"/taken");
+                                chatRef.set(true);
+                                var trashRef = new Firebase("https://parkito.firebaseio.com").child("chatstrash/"+scope.chat+"/"+scope.id+"/expired");
+                                trashRef.set(true);
+                                $interval.cancel(theint);
+                            }
 
                             // console.log("difference calcelated");
                         }, 100);
@@ -513,6 +519,8 @@ angular.module('angular-svg-round-progress')
                     } else {
                         scope.max = 10;
                         scope.current = 0;
+                        var trashRef = new Firebase("https://parkito.firebaseio.com").child("chatstrash/"+scope.chat+"/"+scope.id+"/expired");
+                        trashRef.set(true);
                     }
 
 

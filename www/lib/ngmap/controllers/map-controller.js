@@ -7,14 +7,13 @@
   var Attr2MapOptions;
 
   var __MapController = function(
-      $scope, $element, $attrs, $parse, _Attr2MapOptions_, NgMap
+      $scope, $element, $attrs, $parse, _Attr2MapOptions_, NgMap, NgMapPool
     ) {
     Attr2MapOptions = _Attr2MapOptions_;
     var vm = this;
 
     vm.mapOptions; /** @memberof __MapController */
     vm.mapEvents;  /** @memberof __MapController */
-    vm.ngMapDiv;   /** @memberof __MapController */
 
     /**
      * Add an object to the collection of group
@@ -38,8 +37,7 @@
             vm.map.setCenter(obj.position);
           }
           (groupName == 'markers') && vm.objectChanged('markers');
-          (groupName == 'customMarkers')
-            && vm.objectChanged('customMarkers');
+          (groupName == 'customMarkers') && vm.objectChanged('customMarkers');
         }
       }
     };
@@ -56,15 +54,17 @@
       if (obj.map) {
         var objs = obj.map[groupName];
         for (var name in objs) {
-          objs[name] === obj && (delete objs[name]);
+          if (objs[name] === obj) {
+            google.maps.event.clearInstanceListeners(obj);
+            delete objs[name];
+          }
         }
 
         /* delete from map */
         obj.map && obj.setMap && obj.setMap(null);
 
         (groupName == 'markers') && vm.objectChanged('markers');
-        (groupName == 'customMarkers')
-          && vm.objectChanged('customMarkers');
+        (groupName == 'customMarkers') && vm.objectChanged('customMarkers');
       }
     };
 
@@ -109,7 +109,7 @@
      * @param {String} group name of group e.g., markers
      */
     vm.objectChanged = function(group) {
-      if (
+      if ( vm.map &&
         (group == 'markers' || group == 'customMarkers') &&
         vm.map.zoomToIncludeMarkers == 'auto'
       ) {
@@ -127,26 +127,37 @@
      */
     vm.initializeMap = function() {
       var mapOptions = vm.mapOptions,
-          mapEvents = vm.mapEvents,
-          ngMapDiv = vm.ngMapDiv;
+          mapEvents = vm.mapEvents;
 
       var lazyInitMap = vm.map; //prepared for lazy init
-      vm.map = new google.maps.Map(ngMapDiv, {});
+      vm.map = NgMapPool.getMapInstance($element[0]);
+      NgMap.setStyle($element[0]);
 
       // set objects for lazyInit
       if (lazyInitMap) {
+
+        /**
+         * rebuild mapOptions for lazyInit
+         * becasue attributes values might have been changed
+         */
+        var filtered = Attr2MapOptions.filter($attrs);
+        var options = Attr2MapOptions.getOptions(filtered);
+        var controlOptions = Attr2MapOptions.getControlOptions(filtered);
+        mapOptions = angular.extend(options, controlOptions);
+        console.log('map options', mapOptions);
+
         for (var group in lazyInitMap) {
           var groupMembers = lazyInitMap[group]; //e.g. markers
           if (typeof groupMembers == 'object') {
             for (var id in groupMembers) {
-              vm.addObject(group, groupMembers[id]); 
+              vm.addObject(group, groupMembers[id]);
             }
           }
         }
         vm.map.showInfoWindow = vm.showInfoWindow;
         vm.map.hideInfoWindow = vm.hideInfoWindow;
       }
-      
+
       // set options
       mapOptions.zoom = mapOptions.zoom || 15;
       var center = mapOptions.center;
@@ -202,17 +213,15 @@
      */
     var orgAttrs = Attr2MapOptions.orgAttributes($element);
     var filtered = Attr2MapOptions.filter($attrs);
-    var options = Attr2MapOptions.getOptions(filtered, null, $scope);
+    var options = Attr2MapOptions.getOptions(filtered, {scope: $scope});
     var controlOptions = Attr2MapOptions.getControlOptions(filtered);
     var mapOptions = angular.extend(options, controlOptions);
     var mapEvents = Attr2MapOptions.getEvents($scope, filtered);
+    console.log('ng-map Options', mapOptions);
+    Object.keys(mapEvents).length && console.log('ng-map Events', mapEvents);
 
     vm.mapOptions = mapOptions;
     vm.mapEvents = mapEvents;
-
-    // create html <div> for map
-    vm.ngMapDiv = NgMap.getNgMapDiv($element[0]);
-    $element.append(vm.ngMapDiv);
 
     if (options.lazyInit) { // allows controlled initialization
       vm.map = {id: $attrs.id}; //set empty, not real, map
@@ -221,13 +230,19 @@
       vm.initializeMap();
     }
 
+    //Trigger Resize
+    if(options.triggerResize) {
+      google.maps.event.trigger(vm.map, 'resize');
+    }
+
     $element.bind('$destroy', function() {
+      NgMapPool.returnMapInstance(vm.map);
       NgMap.deleteMap(vm);
     });
   }; // __MapController
 
   __MapController.$inject = [
-    '$scope', '$element', '$attrs', '$parse', 'Attr2MapOptions', 'NgMap'
+    '$scope', '$element', '$attrs', '$parse', 'Attr2MapOptions', 'NgMap', 'NgMapPool'
   ];
   angular.module('ngMap').controller('__MapController', __MapController);
 })();

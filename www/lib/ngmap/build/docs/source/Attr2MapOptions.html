@@ -102,6 +102,18 @@
                 <a href="NgMap.html">NgMap</a>
               </li>
             </ul>
+          </ul><ul class="group">
+            <h3>
+              <a href="" ng-click="undefinedfactory = !undefinedfactory">
+                factory
+              </a>
+              <i ng-cloak="" ng-show="undefinedfactory">+</i>
+            </h3>
+            <ul ng-hide="undefinedfactory">
+              <li>
+                <a href="NgMapPool.html">NgMapPool</a>
+              </li>
+            </ul>
           </ul>
         </li>
       </ul><ul class="module">
@@ -281,6 +293,13 @@
           }
         } // catch(err2)
       } // catch(err)
+      // convert output more for center and position
+      if (
+        (options.key == 'center' || options.key == 'center') &&
+        output instanceof Array
+      ) {
+        output = new google.maps.LatLng(output[0], output[1]);
+      }
       // convert output more for shape bounds
       if (options.key == 'bounds' && output instanceof Array) {
         output = new google.maps.LatLngBounds(output[0], output[1]);

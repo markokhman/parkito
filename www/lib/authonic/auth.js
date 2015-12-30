@@ -202,11 +202,9 @@ angular.module('auth', [])
                   displayName : authData[authData.provider].displayName,
                   profileImageURL : authData[authData.provider].profileImageURL
                 }
-
                 if (authData[authData.provider].email) {
                   userData.email = authData[authData.provider].email;
                 }
-                
                 Session.create(userData);
                 ref.child('users').child(authData.uid).set(userData, function (error) {
                   if (!error) {
@@ -460,6 +458,8 @@ angular.module('auth', [])
       var ref = new Firebase(INFO.firebaseURL);
       ref.child('users').child(user.uid).set(user, function (error) {
         if (!error) {
+            console.log( "Profile successfully updated");
+
           resolve({
             success : true,
             data : "Profile successfully updated"
@@ -541,7 +541,7 @@ angular.module('auth', [])
       if (result.success) {
         $rootScope.$broadcast(AUTH_EVENTS.loginSuccess);
         $ionicLoading.hide();
-        AuthService.hideLoginPopup()
+        // AuthService.hideLoginPopup()
       } else {
         $ionicLoading.hide();
         $scope.message = result.data;
@@ -558,7 +558,7 @@ angular.module('auth', [])
       if (result.success) {
         $rootScope.$broadcast(AUTH_EVENTS.loginSuccess);
         $ionicLoading.hide();
-        AuthService.hideLoginPopup()
+        // AuthService.hideLoginPopup()
       } else {
         $ionicLoading.hide();
         $scope.message = result.data;
@@ -581,7 +581,7 @@ angular.module('auth', [])
           password: ''
         }
         $ionicLoading.hide();
-        AuthService.hideLoginPopup()
+        // AuthService.hideLoginPopup()
       } else {
         $scope.message = result.data;
         $ionicLoading.hide();
@@ -625,7 +625,7 @@ angular.module('auth', [])
               }
               $rootScope.$broadcast(AUTH_EVENTS.loginSuccess);
               $ionicLoading.hide();
-              AuthService.hideLoginPopup()
+              // AuthService.hideLoginPopup()
             } else {
               // Error results of login
               $ionicLoading.hide();
@@ -685,7 +685,7 @@ angular.module('auth', [])
   }
 })
 
-.controller('ProfileCtrl', function ($scope, $rootScope, Session, AuthService, $ionicPopup, $firebaseArray, AUTH_EVENTS, $timeout, CONST) {
+.controller('ProfileCtrl', function ($scope, $rootScope, Session, AuthService, $ionicPopup, AUTH_EVENTS, $timeout) {
   $scope.changesSaved = true;
 
   $rootScope.$on('session-updated', function () {
@@ -765,10 +765,6 @@ angular.module('auth', [])
     AuthService.logout();
     AuthService.hideProfilePopup();
   }
-
-  // custom code
-  $scope.userstory = $firebaseArray(new Firebase(CONST.fire).child('userstory/'+Session.user.uid));
-
 });
 
 

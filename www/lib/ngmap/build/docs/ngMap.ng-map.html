@@ -101,6 +101,18 @@
                 <a href="NgMap.html">NgMap</a>
               </li>
             </ul>
+          </ul><ul class="group">
+            <h3>
+              <a href="" ng-click="undefinedfactory = !undefinedfactory">
+                factory
+              </a>
+              <i ng-cloak="" ng-show="undefinedfactory">+</i>
+            </h3>
+            <ul ng-hide="undefinedfactory">
+              <li>
+                <a href="NgMapPool.html">NgMapPool</a>
+              </li>
+            </ul>
           </ul>
         </li>
       </ul><ul class="module">
@@ -271,6 +283,13 @@ Initialize a Google map within a <code>&lt;div&gt;</code> tag
                 <td class="description last"><p>When true the map will only display one info window at the time,
  if not set or false,
  everytime an info window is open it will be displayed with the othe one.</p>
+</td>
+              </tr><tr>
+                <td class="name" nowrap="">trigger-resize</td>
+                <td class="type"><span class="param-type">
+                  Boolean
+                </span></td>
+                <td class="description last"><p>Default to false.  Set to true to trigger resize of the map.  Needs to be done anytime you resize the map</p>
 </td>
               </tr>
             </tbody>

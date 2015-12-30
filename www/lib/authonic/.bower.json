@@ -34,14 +34,13 @@
     "Mark Okhman"
   ],
   "license": "MIT",
-  "_release": "219b116f97",
+  "_release": "3d997e445e",
   "_resolution": {
     "type": "branch",
     "branch": "master",
-    "commit": "219b116f97dce98c1d92c1842ef2547cf65e5523"
+    "commit": "3d997e445e89451aeb247ffd52d36aeba2188aae"
   },
   "_source": "git://github.com/markusila/authonic.git",
   "_target": "*",
-  "_originalSource": "authonic",
-  "_direct": true
+  "_originalSource": "authonic"
 }
