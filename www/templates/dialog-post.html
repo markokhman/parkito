@@ -1,0 +1,39 @@
+<!--
+  This template loads for the 'tab.friend-detail' state (app.js)
+  'friend' is a $scope variable created in the FriendsCtrl controller (controllers.js)
+  The FriendsCtrl pulls data from the Friends service (service.js)
+  The Friends service returns an array of friend data
+-->
+
+<ion-view hide-nav-bar="true">
+  <ion-content scroll="false">
+
+      <ng-map style="height:100%; width: 100%;">
+      </ng-map>
+      <p ng-repeat="area in areas"> {{area.$id}}</p>
+  </ion-content>
+
+  <div class="card" style="position:absolute; top: 15px; right:0; left:0; margin:auto; width:90%; z-index:1000;">
+    <div class="item item-icon-left">
+       <i class="icon ion-arrow-left-c" ng-hide="areasMode" ng-click="close()"></i>
+        {{spot.formatted_address}} ({{closesChatName}})
+    </div>
+  </div>
+
+    <a ng-click="openModal()" style="font-size: 52px !important;line-height: 52px !important; z-index:1000;">
+      <img style="position:absolute;top:0; left: 0; right:0; bottom:0; margin:auto;" width="50px" src="img/pin.png">
+    </a>
+
+
+    <div class="button-bar" style="position:absolute; width:60%; bottom:35px; right:0; left:0; margin:auto; z-index:2000;">
+      <button ng-click="postUrgent()"  class="button button-large button-assertive">
+        Urgent
+      </button>
+
+      <button ng-click="showPopup()"  class="button button-large button-positive">
+        Wait
+      </button>
+
+    </div>
+
+</ion-view>

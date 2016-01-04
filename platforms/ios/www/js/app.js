@@ -82,6 +82,15 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services','d
         }
       }
     })
+    .state('tab.dialog-post', {
+      url: '/dialogs/post',
+      views: {
+        'tab-dialogs': {
+          templateUrl: 'templates/dialog-post.html',
+          controller: 'DialogPostCtrl'
+        }
+      }
+    })
   .state('tab.account', {
     url: '/account',
     views: {

@@ -45,3 +45,7 @@
 }
 
 boxStyle: { background: "#ffffff", paddingLeft:"4px" }
+
+div.popup-body {
+	text-align: center;
+}
