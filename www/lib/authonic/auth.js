@@ -227,7 +227,8 @@ angular.module('auth', [])
       } 
 
       // Try login with native app
-      if (window.plugins) {
+      // if (window.plugins) {
+        console.log("got into plugin")
         var fbLoginSuccess = function (userData) {
             console.log(userData);
             var access_token = userData.authResponse.accessToken;
@@ -276,9 +277,9 @@ angular.module('auth', [])
               loginWithWebView(); 
             }
         );
-      } else {
-        loginWithWebView();
-      }
+      // } else {
+        // loginWithWebView();
+      // }
     });
   }
 
@@ -395,7 +396,7 @@ angular.module('auth', [])
       } 
 
       // Try login with native app
-      if (window.plugins && window.plugins.googleplus) {
+      // if (window.plugins && window.plugins.googleplus) {
         window.plugins.googleplus.isAvailable(function (available) {
           if (available) {
             loginWithNativeApp();
@@ -403,9 +404,9 @@ angular.module('auth', [])
             loginWithWebView();
           }
         });
-      } else {
-        loginWithWebView();
-      }
+      // } else {
+        // loginWithWebView();
+      // }
     });
   }
 
@@ -456,9 +457,11 @@ angular.module('auth', [])
   authService.updateProfile = function (user) {
     return $q(function (resolve, reject) {
       var ref = new Firebase(INFO.firebaseURL);
+      $rootScope.$broadcast(AUTH_EVENTS.sessionUpdated);
       ref.child('users').child(user.uid).set(user, function (error) {
         if (!error) {
             console.log( "Profile successfully updated");
+            window.localStorage.setItem(INFO.applicationNAME+'User', JSON.stringify(user));
 
           resolve({
             success : true,
@@ -685,11 +688,13 @@ angular.module('auth', [])
   }
 })
 
-.controller('ProfileCtrl', function ($scope, $rootScope, Session, AuthService, $ionicPopup, AUTH_EVENTS, $timeout) {
+.controller('ProfileCtrl', function ($scope, $rootScope, Session, AuthService, INFO, $ionicPopup, AUTH_EVENTS, $timeout, $firebaseArray, CONST) {
   $scope.changesSaved = true;
 
   $rootScope.$on('session-updated', function () {
-    $scope.user = Session.user
+    console.log(Session.user.defaultChatName)
+    $scope.user = Session.user;
+    window.localStorage.setItem(INFO.applicationNAME+'User', JSON.stringify(Session.user));
   });
   
   $scope.hideProfilePopup = function () {
@@ -699,6 +704,18 @@ angular.module('auth', [])
     AuthService.showLoginPopup();
   } else {
     $scope.user = Session.user;
+  }
+
+  var ref = new Firebase(CONST.fire);
+  $scope.areas = $firebaseArray(ref.child('/chatcoords'));  
+  
+  $scope.setArea = function (areaId) {
+      var area = $scope.areas.$getRecord(areaId);
+      Session.user.defaultChatId = area.$id;
+      Session.user.defaultChatName = area.name;
+      AuthService.updateProfile(Session.user).then(function () {
+        console.log("default zone set to "+Session.user.defaultChatName)
+      });
   }
 
   $scope.saveChanges = function (credentials) {

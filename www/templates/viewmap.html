@@ -2,12 +2,11 @@
   <ion-content scroll="false">
 
       <ng-map zoom="11" center="[crd.latitude, crd.longitude]" style="height:100%; width: 100%;">
-          <shape ng-repeat="area in areas" id="area.$id" name="circle"
+<!--           <shape ng-repeat="area in areas" id="area.$id" name="circle"
           stroke-color='#FF0000' stroke-opacity="0.1" stroke-weight="1"
           center="[area.coords.lng,area.coords.lat]" radius="500" editable="false" >
-          </shape>
+          </shape> -->
       </ng-map>
-      <p ng-repeat="area in areas"> {{area.$id}}</p>
   </ion-content>
 
  <!--  <div class="card" style="position:absolute; top: 15px; right:0; left:0; margin:auto; width:90%; z-index:1000;">

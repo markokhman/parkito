@@ -16,6 +16,9 @@
         "cordova-plugin-geolocation": {
             "PACKAGE_NAME": "com.ionicframework.parkito587893"
         },
+        "cordova-plugin-network-information": {
+            "PACKAGE_NAME": "com.ionicframework.parkito587893"
+        },
         "cordova-plugin-splashscreen": {
             "PACKAGE_NAME": "com.ionicframework.parkito587893"
         },
@@ -37,6 +40,10 @@
             "PACKAGE_NAME": "com.ionicframework.parkito587893"
         },
         "phonegap-plugin-push": {
+            "PACKAGE_NAME": "com.ionicframework.parkito587893"
+        },
+        "cordova-plugin-googleplus": {
+            "REVERSED_CLIENT_ID": "com.googleusercontent.apps.44297080299-uuhbp5mmurpfp787sa8jfcd5c87elfer",
             "PACKAGE_NAME": "com.ionicframework.parkito587893"
         }
     },

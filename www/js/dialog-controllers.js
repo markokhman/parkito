@@ -1,9 +1,50 @@
 angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-progress'])
 
-.controller('DialogsCtrl', function($scope, $firebaseArray, CONST, AuthService, Session, $timeout, INFO, $rootScope, $state, $ionicModal, $ionicPlatform) {
+.controller('DialogsCtrl', function($scope, $firebaseArray, CONST, AuthService, Session, $timeout, INFO, $rootScope, $ionicPopup, $state, $ionicModal, $ionicPlatform) {
 	Ionic.io();
+
+	var push = new Ionic.Push({
+	  "debug": false,
+	  "onNotification": function(notification) {
+	    var payload = notification.payload;
+	    console.log(notification, payload);
+	    var alertPopup = $ionicPopup.alert({
+	     	title: 'New spot available',
+	     	template: 'New spot on '+notification.text+' Your area!'
+	   	});
+	  },
+	  "onRegister": function(data) {
+	    console.log(data.token);
+	  },
+	  "pluginConfig": {
+	    "ios": {
+	      "badge": true,
+	      "sound": true
+	     },
+	     "android": {
+	       "iconColor": "#343434"
+	     }
+	  } 
+	});
 	
-	
+	// if (navigator.connection) {
+	// 		console.log(navigator.connection.type)
+	// 	if (navigator.connection.type=='Connection.NONE') {
+	// 		console.log("no connection")
+	// 	}
+	// }
+
+	$rootScope.$on('offline', function () {
+		var alertPopup = $ionicPopup.alert({
+	     	title: 'Your device is offline!',
+	     	template: 'You will not be able to post or take parking spots while offline. Please connect to the Internet'
+	   	});
+	   	$scope.offline = true;
+	})
+	$rootScope.$on('online', function () {
+	   	$scope.offline = false;
+	})
+
 	//Its the first controller to render so we login at this point
 	if (window.localStorage.getItem(INFO.applicationNAME+"User") != null) {
 		// AuthService.hideLoginPopup();
@@ -16,40 +57,108 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 
 	  	// Loading existing user into Current
 
-	  	Session.ionicUser = new Ionic.User.current();
-	  	
-	  	Session.ionicUser.id = Session.user.uid;
-	  	if (Session.user.profileImageURL) {
-	  		Session.ionicUser.set('image', Session.user.profileImageURL);
-	  	}
-	  	if (Session.user.displayName) {
-	  		Session.ionicUser.set('name', Session.user.displayName);
-	  	}
-		Session.ionicUser.save();
+	  	var success = function(loadedUser) {
+		  	Ionic.User.current(loadedUser);
+		  	Session.ionicUser = Ionic.User.current();
+
+		  	var pushCallback = function(pushToken) {
+			  	console.log('Registered token:', pushToken.token);
+			  	Session.ionicUser.addPushToken(pushToken);
+			  	Session.ionicUser.save(); // you NEED to call a save after you add the token
+			}
+
+			push.register(pushCallback);
+
+
+		};
+
+		var failure = function(error) {
+		  	Session.ionicUser = new Ionic.User();
+		  	Session.ionicUser.id = Session.user.uid;
+		  	if (Session.user.profileImageURL) {
+		  		Session.ionicUser.set('image', Session.user.profileImageURL);
+		  	}
+		  	if (Session.user.displayName) {
+		  		Session.ionicUser.set('name', Session.user.displayName);
+		  	}
+			
+			Session.ionicUser.save();
+		  	
+		  	var pushCallback = function(pushToken) {
+			  	console.log('Registered token:', pushToken.token);
+			  	Session.ionicUser.addPushToken(pushToken);
+			  	Session.ionicUser.save(); // you NEED to call a save after you add the token
+			}
+
+			push.register(pushCallback);
+		};
+
+		Ionic.User.load(Session.user.uid).then(success, failure);
+
+		if (!$scope.user.defaultChatId) {
+			$ionicModal.fromTemplateUrl('templates/viewmap.html', {
+			    scope: $scope,
+			    animation: 'slide-in-up'
+			}).then(function(modal) {
+				$scope.areasMode = true;
+				$scope.modal = modal;
+				$scope.modal.show();
+			});
+			
+			$rootScope.closeModal = function() {
+				$scope.modal.remove();
+			};
+		} else {
+			console.log("Redirect to defaultChat");
+		}
 
 
 	} else {
 	     
 		console.log("No user found in cookies. Create anonimous Ionic user")
-		
 
-		// this will give you a fresh user or the previously saved 'current user'
-		Session.ionicUser = new Ionic.User();
-
-		// if the user doesn't have an id, you'll need to give it one.
-	  	Session.ionicUser.id = Ionic.User.anonymousId();
-	  	Session.ionicUser.set('name', 'Not logged user');
-
-
-		//persist the user
-		Session.ionicUser.save();
 		AuthService.showLoginPopup();
-		
 	}
 
 	$rootScope.$on('auth-login-success', function () {
 		$scope.user = Session.user;
-		console.log(Session.user);
+		var ionicUser;
+
+		var success = function(loadedUser) {
+		  	Ionic.User.current(loadedUser);
+		  	Session.ionicUser = Ionic.User.current();
+		  	var pushCallback = function(pushToken) {
+			  	console.log('Registered token:', pushToken.token);
+			  	Session.ionicUser.addPushToken(pushToken);
+			  	Session.ionicUser.save(); // you NEED to call a save after you add the token
+			}
+
+			push.register(pushCallback);
+
+		};
+
+		var failure = function(error) {
+		  	Session.ionicUser = new Ionic.User();
+		  	Session.ionicUser.id = Session.user.uid;
+		  	if (Session.user.profileImageURL) {
+		  		Session.ionicUser.set('image', Session.user.profileImageURL);
+		  	}
+		  	if (Session.user.displayName) {
+		  		Session.ionicUser.set('name', Session.user.displayName);
+		  	}
+			Session.ionicUser.save();
+
+			var pushCallback = function(pushToken) {
+			  	console.log('Registered token:', pushToken.token);
+			  	Session.ionicUser.addPushToken(pushToken);
+			  	Session.ionicUser.save(); // you NEED to call a save after you add the token
+			}
+
+			push.register(pushCallback);
+		};
+
+		Ionic.User.load(Session.user.uid).then(success, failure);
+
 		if (!$scope.user.defaultChatId) {
 			$ionicModal.fromTemplateUrl('templates/viewmap.html', {
 			    scope: $scope,
@@ -69,26 +178,18 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 
 		// Loading existing user into Current
 
-		Session.ionicUser = new Ionic.User();
+		
 	  	
-	  	Session.ionicUser.id = Session.user.uid;
-	  	if (Session.user.profileImageURL) {
-	  		Session.ionicUser.set('image', Session.user.profileImageURL);
-	  	}
-	  	if (Session.user.displayName) {
-	  		Session.ionicUser.set('name', Session.user.displayName);
-	  	}
-		Session.ionicUser.save();
 
 		AuthService.hideLoginPopup();
 
 	});
 	$rootScope.$on('auth-logout-success', function () {
 		$scope.user = null;
-		if (Session.ionicUser.profileImageURL) {
+		if (Session.ionicUser && Session.ionicUser.profileImageURL) {
 	  		Session.ionicUser.unset('image');
 	  	}
-	  	if (Session.ionicUser.displayName) {
+	  	if (Session.ionicUser && Session.ionicUser.displayName) {
 	  		Session.ionicUser.unset('name');
 	  	}
 
@@ -150,34 +251,22 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 	});
 
 	$scope.postSpot = function() {
-	    $state.go('tab.dialog-post');
+		if (!$scope.offline) {
+	    	$state.go('tab.dialog-post');
+		}
+	}
 
-		// $ionicModal.fromTemplateUrl('templates/post-spot.html', {
-		//     scope: $scope,
-		//     animation: 'slide-in-up'
-		// }).then(function(modal) {
-		// 	$scope.modal = modal;
-		// 	$rootScope.closeModal = function() {
-		// 		$scope.modal.hide();
-		// 	};
-		// 	$scope.modal.show();
-		// });
-	};
+	$scope.findspot = function  () {
+		if (!$scope.offline) {
+		    $state.go('tab.dialog-detail',{ id : Session.user.defaultChatId, name: Session.user.defaultChatName});
+		}
+	}
 	
 })
 
-.controller('DialogDetailCtrl', function($scope, $window, $stateParams, $firebaseArray, CONST, $ionicLoading, AuthService, $rootScope, $ionicModal, $state, Session, $ionicScrollDelegate, $ionicPopup, AuthService) {
+.controller('DialogDetailCtrl', function($scope, $window, $stateParams, $firebaseArray, $http, CONST, $ionicLoading, AuthService, $rootScope, $ionicModal, $state, Session, $ionicScrollDelegate, $ionicPopup, AuthService) {
 
 	var deploy = new Ionic.Deploy();
-
-	// auth functionality
-
-	$rootScope.$on('auth-login-success', function () {
-		$scope.user = Session.user;
-	});
-	$rootScope.$on('auth-logout-success', function () {
-		$scope.user = null;
-	});
 
 	$scope.showProfilePopup = function () {
 		AuthService.showProfilePopup();
@@ -220,17 +309,6 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 	$scope.messages.$watch(function() { 
 		$ionicScrollDelegate.scrollBottom();
 	});
-
-	// Post a parking spot
-	// $scope.postSpot = function () {
-		
-	// 	$scope.messages.$add(message).then(function(ref) {
-	// 	    var id = ref.key();
-	// 	    $scope.messages[$scope.messages.$indexFor(id)].mesid = id;
-	// 	    $scope.messages.$save($scope.messages.$indexFor(id));
-	// 		$ionicScrollDelegate.scrollBottom();
-	// 	});
-	// }
 
 	// Triggered on a button click, or some other target
 	$scope.takeSpot = function(spot) {
@@ -289,6 +367,25 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 			$scope.modal.show();
 		});
 	};
+
+	$scope.toogleNotifications = function () {
+		if (Session.user.notification) {
+			Session.user.notification = false;
+			AuthService.updateProfile(Session.user).then(function () {
+				$scope.user = Session.user;
+			});
+		} else {
+			Session.user.notification = true;
+			AuthService.updateProfile(Session.user).then(function () {
+				$scope.user = Session.user;
+			});
+			$http.post('http://notify.elasticbeanstalk.com/parkito/hotifications/'+Session.user.uid);
+			var alertPopup = $ionicPopup.alert({
+		     	title: 'Push notifications ON',
+		     	template: 'You will be notified via push notifications.'
+		   	});
+		}
+	}
 	//Cleanup the modal when we're done with it!
 	$scope.$on('$destroy', function() {
 		// $scope.modal.remove();
@@ -302,42 +399,20 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 	// Execute action
 	});
 
-	// Post emoji
-	$scope.postThanks = function () {
-		var message = {
-			mestype: "thanks",
-			timestamp: Firebase.ServerValue.TIMESTAMP
-		}
-
-		if (Session.user) {
-			message.user = {
-				displayName : Session.user.displayName,
-				profileImageURL : Session.user.profileImageURL,
-				uid : Session.user.uid
-			}
-		}
-		$scope.messages.$add(message).then(function(ref) {
-		    var id = ref.key();
-		    $scope.messages[$scope.messages.$indexFor(id)].mesid = id;
-		    $scope.messages.$save($scope.messages.$indexFor(id));
-			$ionicScrollDelegate.scrollBottom();
-		});
-	}
 
 	// $scope.postThanks();
 })
 .controller('DialogPostCtrl', function($scope, $rootScope, $state, NgMap, $firebaseObject, $ionicPopup, $ionicModal, $timeout, $ionicLoading, CONST, Session, AuthService, $firebaseArray) {
     $ionicLoading.show();	
-	console.log($rootScope.areaCircle)	
 	var areasCoords = $firebaseArray(new Firebase(CONST.fire).child("chatcoords"));
 	
 	NgMap.getMap().then(function(map) {
-	    angular.forEach($rootScope.areaCircle,function (circle) {
-			circle.setMap(null);
-		});
-	    angular.forEach($rootScope.label,function (label) {
-			label.setMap(null);
-		});
+	 //    angular.forEach($rootScope.areaCircle,function (circle) {
+		// 	circle.setMap(null);
+		// });
+	 //    angular.forEach($rootScope.label,function (label) {
+		// 	label.setMap(null);
+		// });
 		$scope.areasMode = false;
 		// current position
 		var options = {
@@ -385,6 +460,7 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 			$scope.areas = $firebaseArray(ref.child('/chatcoords'));	
 			$scope.areas.$loaded().then(function () {
 			    var keep = true;
+			    $ionicLoading.hide();
 				
 				angular.forEach($scope.areas, function(area) {
 				
@@ -401,6 +477,19 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 						}
 					}
 		        });
+				var defaultChat = $scope.areas.$getRecord(Session.user.defaultChatId);
+		    	var colors = ['#79BCE0','#79BCE0','#79BCE0', '#79BCE0', '#79BCE0']
+		        var areaCircle = new google.maps.Circle({
+			      strokeColor: '#D5CCA5',
+			      strokeOpacity: 1,
+			      strokeWeight: 2,
+			      fillColor: colors[Math.floor(Math.random() * colors.length)],
+			      fillOpacity: 0.05,
+			      map: map,
+			      center: {lat: defaultChat.coords.lat, lng: defaultChat.coords.lng},
+			      radius: $scope.areas.radius
+			    });
+
 			});    
 
 		    map.addListener('dragend', function() {
@@ -424,9 +513,6 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 						}
 	    			}
 		        });
-
-		    		
-
 			});
 
 		    function geocodeLatLng(geocoder, map, infowindow, coordinates) {
@@ -456,31 +542,19 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 	    function error(err) {
 	      console.log('ERROR(' + err.code + '): ' + err.message);
 	    };
-	    var ref = new Firebase(CONST.fire);
-		$scope.areas = $firebaseObject(ref.child('/chatcoords/'+Session.user.defaultChatId));
-    	var colors = ['#79BCE0','#79BCE0','#79BCE0', '#79BCE0', '#79BCE0']
+	    // var ref = new Firebase(CONST.fire);
+		// $scope.areas = $firebaseObject(ref.child('/chatcoords/'+Session.user.defaultChatId));
 	    
 	    
-	    $scope.areas.$loaded().then(function () {
-		    var areaCircle = new google.maps.Circle({
-		      strokeColor: '#D5CCA5',
-		      strokeOpacity: 1,
-		      strokeWeight: 2,
-		      fillColor: colors[Math.floor(Math.random() * colors.length)],
-		      fillOpacity: 0.05,
-		      map: map,
-		      center: {lat: $scope.areas.coords.lat, lng: $scope.areas.coords.lng},
-		      radius: $scope.areas.radius
-		    });
-			$ionicLoading.hide();
+	    // $scope.areas.$loaded().then(function () {
+		    
 
 	    	navigator.geolocation.getCurrentPosition(success, error, options);    
-	    });
+	    // });
 
 	});
 
 	$scope.postUrgent = function () {
-		console.log($scope.inZone)
 		if ($scope.inZone) {
 			if (postIt(1)) {
 				var alertPopup = $ionicPopup.alert({
@@ -538,50 +612,58 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 
 	// Triggered on a button click, or some other target
 	$scope.showPopup = function() {
+		if ($scope.inZone) {
+			  $scope.spot.waitingtime = 5;
+			  // An elaborate, custom popup
+			  $scope.myPopup = $ionicPopup.show({
+			    template: "<div class=\"list\"><div class=\"item item-text-wrap\" style=\"background-color: transparent; color: white;text-align: center;font-size: 20px;border: none; \">  {{spot.waitingtime}} min </div>  <div class=\"item range range-positive\">    <i class=\"icon ion-clock assertive\"></i>    <input ng-model=\"spot.waitingtime\" type=\"range\" min=\"0\" max=\"15\"> <i class=\"icon balanced ion-clock\"></i>  </div></div>",
+			    title: 'How long you will wait?',
+			    subTitle: 'Drag <i class="icon ion-arrow-left-c"></i><i class="icon ion-arrow-right-c"></i> to change',
+			    scope: $scope,
+			    buttons: [
+			      { text: '<i class="icon ion-arrow-left-c"></i>',
+			      	onTap: function(e) {
+			        	return false;
+			        } 
+			    	},
+			      {
+			        text: '<b>Post</b>',
+			        type: 'button-positive',
+			        onTap: function(e) {
+						if ($scope.spot.waitingtime) {
+							return postIt($scope.spot.waitingtime);
+						}
+			        	
+			        }
+			      }
+			    ]
+			  });
 
-		  $scope.spot.waitingtime = 5;
-		  // An elaborate, custom popup
-		  $scope.myPopup = $ionicPopup.show({
-		    template: "<div class=\"list\"><div class=\"item item-text-wrap\" style=\"background-color: transparent; color: white;text-align: center;font-size: 20px;border: none; \">  {{spot.waitingtime}} min </div>  <div class=\"item range range-positive\">    <i class=\"icon ion-clock assertive\"></i>    <input ng-model=\"spot.waitingtime\" type=\"range\" min=\"0\" max=\"15\"> <i class=\"icon balanced ion-clock\"></i>  </div></div>",
-		    title: 'How long you will wait?',
-		    subTitle: 'Drag <i class="icon ion-arrow-left-c"></i><i class="icon ion-arrow-right-c"></i> to change',
-		    scope: $scope,
-		    buttons: [
-		      { text: '<i class="icon ion-arrow-left-c"></i>',
-		      	onTap: function(e) {
-		        	return false;
-		        } 
-		    	},
-		      {
-		        text: '<b>Post</b>',
-		        type: 'button-positive',
-		        onTap: function(e) {
-					if ($scope.spot.waitingtime) {
-						return postIt($scope.spot.waitingtime);
-					}
-		        	
-		        }
-		      }
-		    ]
-		  });
+			$scope.myPopup.then(function(res) {
+				// console.log(res)
+			  	if (res) {
+					console.log("Posted");
+					var alertPopup = $ionicPopup.alert({
+				     	title: 'You are amazing!',
+				     	template: 'Thank you very much!'
+				   	});
 
-		$scope.myPopup.then(function(res) {
-			// console.log(res)
-		  	if (res) {
-				console.log("Posted");
-				var alertPopup = $ionicPopup.alert({
-			     	title: 'You are amazing!',
-			     	template: 'Thank you very much!'
-			   	});
+				   alertPopup.then(function(res) {
+						$scope.close();
+				     // console.log('Thank you for not eating my delicious ice cream cone');
+				   });
+			  	} else {
+			  		$scope.myPopup.hide();
+			  	}
+			});
+			
+		} else {
+			var alertPopup = $ionicPopup.alert({
+		     	title: 'You are out of zone',
+		     	template: 'Sorry, you cant post parking spots out of community area!'
+		   	});
+	   }
 
-			   alertPopup.then(function(res) {
-					$scope.close();
-			     // console.log('Thank you for not eating my delicious ice cream cone');
-			   });
-		  	} else {
-		  		$scope.myPopup.hide();
-		  	}
-		});
 	}
 
 	$scope.close = function () {
@@ -775,7 +857,7 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 		        $scope.areas.$loaded().then(function () {
 			    		angular.forEach($scope.areas, function(area) {
 						    // Add the circle for this city to the map.
-						    $rootScope.areaCircle[area.id] = new google.maps.Circle({
+						    var areaCircle = new google.maps.Circle({
 						      strokeColor: '#D5CCA5',
 						      strokeOpacity: 1,
 						      strokeWeight: 2,
@@ -801,17 +883,17 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 						        },
 						        disableAutoPan: true,
 						        pixelOffset: new google.maps.Size(-45, 0),
-						        position: $rootScope.areaCircle[area.id].center,
+						        position: areaCircle.center,
 						        closeBoxURL: "",
 						        isHidden: false,
 						        enableEventPropagation: true
 						    };
 
-						    $rootScope.label[area.id] = new InfoBox(myOptions);
-						    $rootScope.label[area.id].open(map);
+						    var label = new InfoBox(myOptions);
+						    label.open(map);
 
-						    $rootScope.areaCircle[area.id].addListener('click', function() {
-
+						    areaCircle.addListener('click', function() {
+						    	console.log("lol")
 		    					if ($scope.areasMode) {
 
 							    	Session.user.defaultChatId = area.$id;

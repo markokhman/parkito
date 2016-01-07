@@ -17,6 +17,12 @@
     <button style="margin-left:auto;margin-top: 20px; margin-right:auto; display:block;" ng-click="postSpot()" class="button button-calm">
       Post
     </button>
+
+    <div ng-show="offline" class="card" style="position:absolute; bottom:20px; right:0; left:0; margin:auto; text-align:center;">
+      <div class="item item-text-wrap" style="color:red;">
+        Your device is offline
+      </div>
+    </div>
     <!-- <map-window post="true" externalScope="externalScope"></map-window> -->
   </ion-content>
  </ion-view>

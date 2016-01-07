@@ -18,7 +18,14 @@
         <h2>{{user.displayName}}</h2>
         <p>{{user.email}}</p>
       </div>
-
+      <label class="item item-input item-select">
+        <div class="input-label">
+          Default zone ({{user.defaultChatName}})
+        </div>
+        <select ng-change="setArea(defaultzone)" ng-model="defaultzone">
+          <option ng-repeat="area in areas" ng-value="area.id">{{area.name}}</option>
+        </select>
+      </label>
       <div class="item item-body">
         <label class="item item-input item-stacked-label">
           <span class="input-label">Tap to edit display name</span>

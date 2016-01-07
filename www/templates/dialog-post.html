@@ -6,11 +6,11 @@
 -->
 
 <ion-view hide-nav-bar="true">
-  <ion-content scroll="false">
+  <ion-content scroll="false" data-tap-disabled="false">
 
       <ng-map style="height:100%; width: 100%;">
+        <!-- <traffic-layer></traffic-layer> -->
       </ng-map>
-      <p ng-repeat="area in areas"> {{area.$id}}</p>
   </ion-content>
 
   <div class="card" style="position:absolute; top: 15px; right:0; left:0; margin:auto; width:90%; z-index:1000;">
