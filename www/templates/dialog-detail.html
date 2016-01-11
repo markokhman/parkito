@@ -5,41 +5,46 @@
   The Friends service returns an array of friend data
 -->
 
-<ion-view view-title="{{name}}">
-  <ion-nav-buttons side="secondary">
-    <button class="button button-clear button-positive" ng-show="!user.notification" ng-click="toogleNotifications()">
-      Notify 
-    </button>
-    <button class="button button-clear button-assertive" ng-show="user.notification" ng-click="toogleNotifications()">
-      Stop 
-    </button>
-  </ion-nav-buttons>
+<ion-view>
+  <ion-nav-bar> 
+    <ion-nav-title>
+      <img src="img/Parking.png" style="width:20px;">
+        {{name}}
+    </ion-nav-title>
+    <ion-nav-back-button class="button-clear" style="margin-top:7px !important;">
+      <i style="color: black;font-size: 30px;padding-left: 15px;padding-top: 30px;" class="ion-android-arrow-back"></i>
+      &nbsp;
+    </ion-nav-back-button>
+    <ion-nav-buttons side="secondary">
+    
+      <img src="img/NotifyBtnOff.png" ng-click="toogleNotifications()" ng-show="!user.notification" style="width:30px; position:absolute; right: 8px; top: 9px;">
+      <img src="img/NotifyBtnOn.png" ng-click="toogleNotifications()" ng-show="user.notification" style="width:30px; position:absolute; right: 8px; top: 9px;">
+      <!-- <button class="button button-clear button-positive" ng-show="!user.notification" ng-click="toogleNotifications()"> -->
+        <!-- Notify  -->
+      <!-- </button> -->
+      <!-- <button class="button button-clear button-assertive" ng-show="user.notification" ng-click="toogleNotifications()">
+        Stop 
+      </button> -->
+    </ion-nav-buttons>
+  </ion-nav-bar> 
+
   <ion-content class="padding" hide-tabs='true'>
     <div style="padding-bottom:200px;">
       
-      <div class="item item-avatar" ng-repeat="message in messages" style="border: none;">
-        <img ng-src="{{message.user.profileImageURL}}">
+      <div class="item item-avatar" ng-repeat="message in messages" style="background-color:#E1E1E1; border-top: 5px solid white; border-left: none; border-right: none;">
+        <div ng-show="message.taken" class="blockoverlay" style="text-align:center;">
+          &nbsp;
+          <!-- <p style="padding-top:25px; font-size:40px; color:grey; height:100%;">TAKEN</p> -->
+        </div>
+        <img class="av" ng-src="{{message.user.profileImageURL}}">
         <img ng-show="message.mestype=='thanks'" src="img/thanks.png" style="width:70px;">
-        <h2 ng-show="message.mestype=='spot'">{{message.formatted_address}}</h2>
-        <p style="font-style: italic; font-size: 10px">{{message.user.displayName}}</p>
-        <div ng-show="message.mestype=='spot' && !message.taken && message.timedeadline!=10 && message.user.uid!=user.uid" ng-click="takeSpot(message)" style="width: 12%; position: absolute; right: 4px; top: 15px;">
-          <div
-            round-progress
-            posted="message.timeposted"
-            max="message.timedeadline"
-            id="message.$id"
-            chat="chatid"
-            current="timeposted"
-            color="#2ecc71"
-            bgcolor="#eaeaea"
-            radius="50"
-            stroke="14"
-            semi="false"
-            rounded="false"
-            clockwise="false"
-            responsive="true"
-            duration="400"
-            animation="linearEase">
+
+        <h2 ng-show="message.mestype=='spot'"><img src="img/Location.png" style="width: 15px; padding-top:4px;"> {{message.formatted_address}}</h2>
+        <p style="font-family: Roboto-Light; font-size: 15px; padding-left:19px;">{{message.user.displayName}}</p>
+        <div ng-show="message.mestype=='spot' && message.timedeadline!=10 " ng-click="takeSpot(message)" style="width: 12%; position: absolute; right: 4px; top: 15px;">
+          <img style="position:absolute; right:25px; width:30px;" src="img/Timer.png" >
+          <div style="position:absolute; right:10px; top: 27px;" class="thetimer">
+            <hello-world taken="message.taken" chat="chatid" id="message.$id" end-time="message.timedeadline"/>
           </div>
         </div>
       </div>

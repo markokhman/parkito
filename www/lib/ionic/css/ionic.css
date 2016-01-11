@@ -3859,6 +3859,7 @@ a.subdued {
   box-sizing: border-box;
   padding: 5px;
   width: 100%;
+  font-family: Roboto-Regular;
   height: 44px;
   border-width: 0;
   border-style: solid;
@@ -5629,7 +5630,7 @@ ion-tabs.tabs-color-active-dark .tab-item {
   display: -moz-flex;
   display: -ms-flexbox;
   display: flex;
-  -webkit-box-pack: center;
+ /* -webkit-box-pack: center;
   -ms-flex-pack: center;
   -webkit-justify-content: center;
   -moz-justify-content: center;
@@ -5638,7 +5639,7 @@ ion-tabs.tabs-color-active-dark .tab-item {
   -ms-flex-align: center;
   -webkit-align-items: center;
   -moz-align-items: center;
-  align-items: center;
+  align-items: center;*/
   z-index: 12;
   visibility: hidden; }
   .popup-container.popup-showing {
@@ -7801,7 +7802,7 @@ input:checked + .checkbox-icon:after {
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background-color: #fff;
+    background-color: #78BBE0;
     box-shadow: 0 0 2px rgba(0, 0, 0, 0.3), 0 3px 5px rgba(0, 0, 0, 0.2);
     cursor: pointer;
     -webkit-appearance: none;

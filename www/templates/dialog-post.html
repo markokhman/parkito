@@ -5,34 +5,52 @@
   The Friends service returns an array of friend data
 -->
 
-<ion-view hide-nav-bar="true">
-  <ion-content scroll="false" data-tap-disabled="false">
+<ion-view>
+  <ion-nav-bar> 
+    <ion-nav-title style="font-size: 20px !important;">
+      <!-- <img src="../img/Parking.png" style="width:20px;"> -->
+        {{spot.formatted_address}} ({{closesChatName}})
+    </ion-nav-title>
+    <ion-nav-back-button class="button-clear" style="margin-top:7px !important;">
+      <i style="color: black;font-size: 30px;padding-left: 15px;padding-top: 30px;" class="ion-android-arrow-back"></i>
+      &nbsp;
+    </ion-nav-back-button>
+
+  </ion-nav-bar> 
+  <ion-content scroll="false" data-tap-disabled="true">
 
       <ng-map style="height:100%; width: 100%;">
         <!-- <traffic-layer></traffic-layer> -->
       </ng-map>
   </ion-content>
 
-  <div class="card" style="position:absolute; top: 15px; right:0; left:0; margin:auto; width:90%; z-index:1000;">
+<!--   <div class="card" style="position:absolute; top: 15px; right:0; left:0; margin:auto; width:90%; z-index:10000 !important;">
     <div class="item item-icon-left">
        <i class="icon ion-arrow-left-c" ng-hide="areasMode" ng-click="close()"></i>
         {{spot.formatted_address}} ({{closesChatName}})
     </div>
   </div>
-
+ -->
     <a ng-click="openModal()" style="font-size: 52px !important;line-height: 52px !important; z-index:1000;">
-      <img style="position:absolute;top:0; left: 0; right:0; bottom:0; margin:auto;" width="50px" src="img/pin.png">
+      <img style="position:absolute;top:0; left: 0; right:0; bottom:0; margin:auto;" width="90px" src="img/PositionIcon.png">
     </a>
 
 
-    <div class="button-bar" style="position:absolute; width:60%; bottom:35px; right:0; left:0; margin:auto; z-index:2000;">
-      <button ng-click="postUrgent()"  class="button button-large button-assertive">
+    <div class="button-bar" style="position:absolute; width:100%; bottom:35px; right:0; left:0; margin:auto; z-index:2000;">
+      <div style="width:50%">
+        <img src="img/NowBtn.png" ng-click="postUrgent()" style="width:80%; display:block; margin-left:auto; margin-right:auto; height:auto;">
+      </div>
+      <div style="width:50%">
+        <img src="img/LaterBtn.png" ng-click="showPopup()"  style="width:80%; display:block; margin-left:auto; margin-right:auto; height:auto;">
+      </div>
+      <!-- <img src="../img/LaterBtn.png" style="width:30%; height:auto;"> -->
+      <!-- <button ng-click="postUrgent()"  class="button button-large button-assertive">
         Urgent
-      </button>
+      </button> -->
 
-      <button ng-click="showPopup()"  class="button button-large button-positive">
+      <!-- <button ng-click="showPopup()"  class="button button-large button-positive">
         Wait
-      </button>
+      </button> -->
 
     </div>
 

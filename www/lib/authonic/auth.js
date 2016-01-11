@@ -31,6 +31,8 @@ angular.module('auth', [])
     $ionicModal.fromTemplateUrl('lib/authonic/login.html').then(function(modal) {
       authService.loginModal = modal;
       authService.loginModal.show();
+    },{
+        animation: 'slide-in-right'
     });
   }
 
@@ -270,13 +272,19 @@ angular.module('auth', [])
             );
         }
 
-        facebookConnectPlugin.login(["public_profile","email"],
-            fbLoginSuccess,
-            function (error) { 
-              console.log(error);
-              loginWithWebView(); 
-            }
-        );
+        if (typeof facebookConnectPlugin === 'undefined') {
+            // alert('FB variable does not exist. Check that you have included the Facebook JS SDK file.');
+            loginWithWebView(); 
+        } else {
+          facebookConnectPlugin.login(["public_profile","email"],
+              fbLoginSuccess,
+              function (error) { 
+                console.log(error);
+                loginWithWebView(); 
+              }
+          );
+
+        }
       // } else {
         // loginWithWebView();
       // }
