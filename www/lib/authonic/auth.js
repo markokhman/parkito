@@ -239,34 +239,47 @@ angular.module('auth', [])
                 url,
                 ['public_profile','email'],
             function (response) {
-             // SUccess function
-              if (!response.email) {
-                response.email = "none";
-              };
-              var userData = {
-                uid : "facebooknative:"+response.id,
-                access_token : access_token,
-                provider : "facebooknative",
-                email : response.email,
-                displayName : response.name,
-                profileImageURL : response.picture.data.url
-              }
-              console.log(userData)
-              Session.create(userData);
-              ref.child('users').child(response.id).set(userData, function (error) {
-                if (!error) {
+
+              ref.child('users').child("facebooknative:"+response.id).once('value', function (snapshot) {
+                if (snapshot.val()) {
+                  Session.create(snapshot.val());
                   resolve({ 
                     success : true,
-                    data : "Successfully saved User data" 
+                    data : "Successfully logged in" 
                   });
                 } else {
-                  resolve({ 
-                    success : false,
-                    data : "Could not save User data" 
+                  // SUccess function
+                  if (!response.email) {
+                    response.email = "none";
+                  };
+                  var userData = {
+                    uid : "facebooknative:"+response.id,
+                    access_token : access_token,
+                    provider : "facebooknative",
+                    email : response.email,
+                    displayName : response.name,
+                    profileImageURL : response.picture.data.url
+                  }
+                  console.log(userData)
+                  Session.create(userData);
+                  ref.child('users').child(response.id).set(userData, function (error) {
+                    if (!error) {
+                      resolve({ 
+                        success : true,
+                        data : "Successfully saved User data" 
+                      });
+                    } else {
+                      resolve({ 
+                        success : false,
+                        data : "Could not save User data" 
+                      });
+                      console.log(error);
+                    }
                   });
-                  console.log(error);
                 }
               });
+
+             
             },
             function (error) { console.error(error); }
             );

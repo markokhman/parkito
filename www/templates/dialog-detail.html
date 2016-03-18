@@ -8,17 +8,18 @@
 <ion-view>
   <ion-nav-bar> 
     <ion-nav-title>
-      <img src="img/Parking.png" style="width:20px;">
+      <img src="img/Parking.png" class="ios-parking" style="width:20px;">
         {{name}}
     </ion-nav-title>
-    <ion-nav-back-button class="button-clear" style="margin-top:7px !important;">
+    <ion-nav-back-button class="button-clear">
       <i style="color: black;font-size: 30px;padding-left: 15px;padding-top: 30px;" class="ion-android-arrow-back"></i>
       &nbsp;
     </ion-nav-back-button>
     <ion-nav-buttons side="secondary">
     
-      <img src="img/NotifyBtnOff.png" ng-click="toogleNotifications()" ng-show="!user.notification" style="width:30px; position:absolute; right: 8px; top: 9px;">
-      <img src="img/NotifyBtnOn.png" ng-click="toogleNotifications()" ng-show="user.notification" style="width:30px; position:absolute; right: 8px; top: 9px;">
+      <!-- <img src="img/NotifyBtnOff.png" class="ios-notify" ng-click="goToMap()" style="width:30px; position:absolute; right: 8px; top: 9px;"> -->
+      <i ng-click="goToMap()" class="icon ion-map ios-notify" style="font-size:30px; position:absolute; right: 14px; top: 9px;"></i>
+      <!-- <img src="img/NotifyBtnOn.png" class="ios-notify" ng-click="toogleNotifications()" ng-show="user.notification" style="width:30px; position:absolute; right: 8px; top: 9px;"> -->
       <!-- <button class="button button-clear button-positive" ng-show="!user.notification" ng-click="toogleNotifications()"> -->
         <!-- Notify  -->
       <!-- </button> -->
@@ -31,7 +32,7 @@
   <ion-content class="padding" hide-tabs='true'>
     <div style="padding-bottom:200px;">
       
-      <div class="item item-avatar" ng-repeat="message in messages" style="background-color:#E1E1E1; border-top: 5px solid white; border-left: none; border-right: none;">
+      <div class="item item-avatar" ng-repeat="message in messages" style="background-color:#E1E1E1; border-top: 5px solid white; border-left: none; border-right: none;" ng-click="takeSpot(message)">
         <div ng-show="message.taken" class="blockoverlay" style="text-align:center;">
           &nbsp;
           <!-- <p style="padding-top:25px; font-size:40px; color:grey; height:100%;">TAKEN</p> -->
@@ -39,13 +40,14 @@
         <img class="av" ng-src="{{message.user.profileImageURL}}">
         <img ng-show="message.mestype=='thanks'" src="img/thanks.png" style="width:70px;">
 
-        <h2 ng-show="message.mestype=='spot'"><img src="img/Location.png" style="width: 15px; padding-top:4px;"> {{message.formatted_address}}</h2>
-        <p style="font-family: Roboto-Light; font-size: 15px; padding-left:19px;">{{message.user.displayName}}</p>
-        <div ng-show="message.mestype=='spot' && message.timedeadline!=10 " ng-click="takeSpot(message)" style="width: 12%; position: absolute; right: 4px; top: 15px;">
-          <img style="position:absolute; right:25px; width:30px;" src="img/Timer.png" >
-          <div style="position:absolute; right:10px; top: 27px;" class="thetimer">
+        <h2 style="width: 80%;" ng-show="message.mestype=='spot'"><img src="img/Location.png" style="width: 15px; padding-top:4px;"> {{message.formatted_address}}</h2>
+        <p style="font-family: Roboto-Light; font-size: 15px; width: 80%; padding-left:19px;">{{message.user.displayName}}</p>
+        <div ng-show="message.mestype=='spot' && message.timedeadline!=10 " style="width: 12%; position: absolute; right: 4px; top: 15px;">
+          <img ng-hide="message.taken" style="position:absolute; right:25px; width:30px;" src="img/Timer.png" >
+          <div ng-hide="message.taken" style="position:absolute; right:10px; top: 27px;" class="thetimer">
             <hello-world taken="message.taken" chat="chatid" id="message.$id" end-time="message.timedeadline"/>
           </div>
+          <time-end ng-show="message.taken" end-time="message.timedeadline"/>
         </div>
       </div>
     </div>

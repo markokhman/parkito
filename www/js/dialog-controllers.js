@@ -3,14 +3,24 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 .controller('DialogsCtrl', function($scope, $firebaseArray, CONST, AuthService, Session, $timeout, INFO, $rootScope, $ionicPopup, $state, $ionicModal, $ionicPlatform) {
 	Ionic.io();
 	
+
+	$scope.invite = function () {
+		window.plugins.socialsharing.share(null, null, null, 'http://www.parkito.io/'+Session.user.defaultChatName);
+	}
+
+	$scope.info = function () {
+		window.open('http://www.parkito.io/info', '_system', 'location=yes');
+	}
+
+
 	var push = new Ionic.Push({
 	  "debug": false,
 	  "onNotification": function(notification) {
 	    var payload = notification.payload;
 	    console.log(notification, payload);
 	    var alertPopup = $ionicPopup.alert({
-	     	title: 'New spot available',
-	     	template: 'New spot on '+notification.text+' Your area!'
+	     	title: 'Hey, it\'s Parkito!',
+	     	template: '<p style="font-size:23px;">'+notification.text+'</p>'
 	   	});
 	  },
 	  "onRegister": function(data) {
@@ -56,6 +66,7 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 	  	// $ionicLoading.show({
 	   //    	template: 'Loading the beauty...'
 	   //  });
+		// alert("lol");
 
 	  	// Loading existing user into Current
 
@@ -72,6 +83,8 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 			push.register(pushCallback);
 
 			if (!Session.user.defaultChatId) {
+				
+				// Ionic #modal should be here
 				$ionicModal.fromTemplateUrl('templates/viewmap.html', {
 				    scope: $scope,
 				    animation: 'slide-in-up'
@@ -80,7 +93,7 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 					$scope.modal = modal;
 					$scope.modal.show();
 				});
-				
+
 				$rootScope.closeModal = function() {
 					$scope.modal.remove();
 				};
@@ -348,6 +361,40 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
       template: "<h3 class=\"thecount\">{{minutes}}:{{seconds}}</h3>"
   };
 })
+.directive('timeEnd', function() {
+  return {
+      restrict: 'AE',
+      replace: 'true',
+      scope: {
+        endTimeAttr: '=endTime'
+      },
+      controller : function ($timeout, $scope) {
+      	Date.prototype.customFormat = function(formatString){
+		  var YYYY,YY,MMMM,MMM,MM,M,DDDD,DDD,DD,D,hhhh,hhh,hh,h,mm,m,ss,s,ampm,AMPM,dMod,th;
+		  YY = ((YYYY=this.getFullYear())+"").slice(-2);
+		  MM = (M=this.getMonth()+1)<10?('0'+M):M;
+		  MMM = (MMMM=["January","February","March","April","May","June","July","August","September","October","November","December"][M-1]).substring(0,3);
+		  DD = (D=this.getDate())<10?('0'+D):D;
+		  DDD = (DDDD=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][this.getDay()]).substring(0,3);
+		  th=(D>=10&&D<=20)?'th':((dMod=D%10)==1)?'st':(dMod==2)?'nd':(dMod==3)?'rd':'th';
+		  formatString = formatString.replace("#YYYY#",YYYY).replace("#YY#",YY).replace("#MMMM#",MMMM).replace("#MMM#",MMM).replace("#MM#",MM).replace("#M#",M).replace("#DDDD#",DDDD).replace("#DDD#",DDD).replace("#DD#",DD).replace("#D#",D).replace("#th#",th);
+		  h=(hhh=this.getHours());
+		  if (h==0) h=24;
+		  if (h>12) h-=12;
+		  hh = h<10?('0'+h):h;
+		  hhhh = h<10?('0'+hhh):hhh;
+		  AMPM=(ampm=hhh<12?'am':'pm').toUpperCase();
+		  mm=(m=this.getMinutes())<10?('0'+m):m;
+		  ss=(s=this.getSeconds())<10?('0'+s):s;
+		  return formatString.replace("#hhhh#",hhhh).replace("#hhh#",hhh).replace("#hh#",hh).replace("#h#",h).replace("#mm#",mm).replace("#m#",m).replace("#ss#",ss).replace("#s#",s).replace("#ampm#",ampm).replace("#AMPM#",AMPM);
+		};
+      	$scope.time = new Date($scope.endTimeAttr).customFormat( "#hhh#:#mm#" );
+      	$scope.date = new Date($scope.endTimeAttr).customFormat( "#DD# #MMM#" );
+
+      },
+      template: "<h3 style=\"position: absolute;top: 11px;right: 15px;\"><b>{{time}}</b> <br> {{date}}</h3>"
+  };
+})
 
 .controller('DialogDetailCtrl', function($scope, $window, $stateParams, $firebaseArray, $http, CONST, $ionicLoading, AuthService, $rootScope, $ionicModal, $state, Session, $ionicScrollDelegate, $ionicPopup, AuthService) {
 
@@ -362,6 +409,12 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 	$scope.logout = function () {
 		AuthService.logout();
 	}
+
+	$scope.goToMap = function () {
+		window.open('https://www.google.com/maps/d/u/0/viewer?mid=zTfxHH3ozQ78.kqGT2_t8CgiQ', '_system', 'location=yes');
+	}
+
+
 
 	// Loading spin
 	$ionicLoading.show({
@@ -381,7 +434,7 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 
 
 	var chatRef = new Firebase(CONST.fire).child("chatcontents/"+$scope.chatid);
-	var query = chatRef.orderByChild("timestamp");
+	var query = chatRef.orderByChild("timestamp").limitToLast(15);
 	
 	$scope.messages = $firebaseArray(query);
 
@@ -397,22 +450,23 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 
 	// Triggered on a button click, or some other target
 	$scope.takeSpot = function(spot) {
-
+		if (!spot.taken) {
 		  // An elaborate, custom popup
 		  var myPopup = $ionicPopup.show({
-		    template: "",
-		    title: 'Do you want to take this spot on '+spot.formatted_address+'?',
-		    subTitle: 'We will navigate You with WAZE app',
+		    template: '<h2 style="color:white;">Do you want to take this spot on '+spot.formatted_address+'?</h2><br><p>Redirecting to WAZE<p>',
+		    title: '',
+		    subTitle: '',
 		    scope: $scope,
 		    buttons: [
-		      { text: '<i class="icon ion-arrow-left-c"></i>',
+		      { text: '<i class="ion-icon ion-android-close "></i>',
+		        type: 'button-closeit',
 		      	onTap: function(e) {
 		        	return false;
 		        } 
-		    	},
+    		},
 		      {
-		        text: '<b>YES</b>',
-		        type: 'button-positive',
+		        text: '<i class="ion-icon ion-android-done"></i>',
+		        type: 'button-closeit',
 		        onTap: function(e) {
 	            	return true;
 		        }
@@ -433,10 +487,15 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 					name : spot.name,
 					posted : false
 				});
+
+				$http.post('http://notify.elasticbeanstalk.com/parkito/notifications/ownernotifier/'+spot.user.uid);
+				// $http.post('http://localhost:8081/parkito/notifications/ownernotifier/'+spot.user.uid);
+
 				
 		    	window.open("waze://?ll="+spot.coordinates.lat+","+spot.coordinates.lng+"&navigate=yes", "_system");
 		  	};
 		  });
+		}
 	};
 
 
@@ -463,12 +522,13 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 			Session.user.notification = true;
 			AuthService.updateProfile(Session.user).then(function () {
 				$scope.user = Session.user;
+				// $http.post('http://notify.elasticbeanstalk.com/parkito/hotifications/'+Session.user.uid);
+				$http.post('http://localhost:8081/parkito/hotifications/'+Session.user.uid);
+				var alertPopup = $ionicPopup.alert({
+			     	title: 'Push notifications ON',
+			     	template: 'You will be notified about available parking spots'
+			   	});
 			});
-			$http.post('http://notify.elasticbeanstalk.com/parkito/hotifications/'+Session.user.uid);
-			var alertPopup = $ionicPopup.alert({
-		     	title: 'Push notifications ON',
-		     	template: 'You will be notified via push notifications.'
-		   	});
 		}
 	}
 	//Cleanup the modal when we're done with it!
@@ -521,6 +581,45 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 		  return d<=radius;
 		}
 
+		function inside(point, vs) {
+			console.log(point)
+			console.log(vs)
+
+		    var x = point[0], y = point[1];
+		    console.log(vs.length);
+
+		    var inside = false;
+		    for (var i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+		        var xi = vs[i][0], yi = vs[i][1];
+		        var xj = vs[j][0], yj = vs[j][1];
+
+		        var intersect = ((yi > y) != (yj > y))
+		            && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+		        if (intersect) inside = !inside;
+		    	console.log(inside);
+		        
+		    }
+		    return inside;
+		}
+
+		function checkcheck (x, y, cornersX, cornersY) {
+
+			var i, j=cornersX.length-1 ;
+			var  oddNodes=false;
+
+			var polyX = cornersX;
+			var polyY = cornersY;
+
+			for (i=0; i<cornersX.length; i++) {
+			    if ((polyY[i]< y && polyY[j]>=y ||  polyY[j]< y && polyY[i]>=y)	&&  (polyX[i]<=x || polyX[j]<=x)) {
+			      oddNodes^=(polyX[i]+(y-polyY[i])/(polyY[j]-polyY[i])*(polyX[j]-polyX[i])<x); 
+			  	}
+			    j=i; 
+			}
+
+			  return oddNodes;
+		}
+
 		function deg2rad(deg) {
 		  return deg * (Math.PI/180)
 		}
@@ -550,32 +649,69 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 			    $ionicLoading.hide();
 				
 				angular.forEach($scope.areas, function(area) {
-				
-	    			if (keep) {
-						if (getDistanceFromLatLonInKm(crd.latitude, crd.longitude, area.coords.lat, area.coords.lng, area.radius)) {
-							$scope.closesChatId = area.id;
-							$scope.closesChatName = area.name;
-							$scope.inZone = true;
-							keep = false;
-						} else {
-							$scope.inZone = false;
-							$scope.closesChatId = null;
-							$scope.closesChatName = "No area";
+
+				    // Add the circle for this city to the map.
+				    // var areaCircle = new google.maps.Circle({
+				    //   strokeColor: '#D5CCA5',
+				    //   strokeOpacity: 1,
+				    //   strokeWeight: 0,
+				    //   fillColor: area.color,
+				    //   fillOpacity: 0,
+				    //   map: map,
+				    //   center: {lat: area.coords.lat, lng: area.coords.lng},
+				    //   radius: area.radius
+				    // });
+					if (area.type=="circle") {
+		    			if (keep) {
+							if (getDistanceFromLatLonInKm(crd.latitude, crd.longitude, area.coords.lat, area.coords.lng, area.radius)) {
+								$scope.closesChatId = area.id;
+								$scope.closesChatName = area.name;
+								$scope.inZone = true;
+								keep = false;
+							} else {
+								$scope.inZone = false;
+								$scope.closesChatId = null;
+								$scope.closesChatName = "No area";
+							}
 						}
-					}
+					} else {
+
+						if (keep) {
+							var areaPoints = []
+							var areaPointsX = []
+							var areaPointsY = []
+							angular.forEach(area.points, function (point) {
+
+								areaPointsX.push(point.lat);
+								areaPointsY.push(point.lng);
+								areaPoints.push(point);
+							})
+							if (checkcheck(crd.latitude, crd.longitude, areaPointsX, areaPointsY)) {
+								$scope.closesChatId = area.id;
+								$scope.closesChatName = area.name;
+								$scope.inZone = true;
+								keep = false;
+							} else {
+								$scope.inZone = false;
+								$scope.closesChatId = null;
+								$scope.closesChatName = "No area";
+							}
+						};
+					};
+
 		        });
 				var defaultChat = $scope.areas.$getRecord(Session.user.defaultChatId);
-		    	var colors = ['#79BCE0','#79BCE0','#79BCE0', '#79BCE0', '#79BCE0']
-		        var areaCircle = new google.maps.Circle({
-			      strokeColor: '#D5CCA5',
-			      strokeOpacity: 1,
-			      strokeWeight: 2,
-			      fillColor: colors[Math.floor(Math.random() * colors.length)],
-			      fillOpacity: 0.05,
-			      map: map,
-			      center: {lat: defaultChat.coords.lat, lng: defaultChat.coords.lng},
-			      radius: $scope.areas.radius
-			    });
+		    	// var colors = ['#79BCE0','#79BCE0','#79BCE0', '#79BCE0', '#79BCE0']
+		     //    var areaCircle = new google.maps.Circle({
+			    //   strokeColor: '#D5CCA5',
+			    //   strokeOpacity: 1,
+			    //   strokeWeight: 2,
+			    //   fillColor: colors[Math.floor(Math.random() * colors.length)],
+			    //   fillOpacity: 0.05,
+			    //   map: map,
+			    //   center: {lat: defaultChat.coords.lat, lng: defaultChat.coords.lng},
+			    //   radius: $scope.areas.radius
+			    // });
 
 			});    
 
@@ -587,18 +723,43 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 			    var keep = true;
 			    
 	    		angular.forEach($scope.areas, function(area) {
-	    			if (keep) {
-						if (getDistanceFromLatLonInKm(coordinates.lat(), coordinates.lng(), area.coords.lat, area.coords.lng, area.radius)) {
-							$scope.closesChatId = area.id;
-							$scope.closesChatName = area.name;
-							$scope.inZone = true;
-							keep = false;
-						} else {
-							$scope.inZone = false;
-							$scope.closesChatId = null;
-							$scope.closesChatName =  "No area";
-						}
-	    			}
+	    			if (area.type=="circle") {
+		    			if (keep) {
+							if (getDistanceFromLatLonInKm(coordinates.lat(), coordinates.lng(), area.coords.lat, area.coords.lng, area.radius)) {
+								$scope.closesChatId = area.id;
+								$scope.closesChatName = area.name;
+								$scope.inZone = true;
+								keep = false;
+							} else {
+								$scope.inZone = false;
+								$scope.closesChatId = null;
+								$scope.closesChatName =  "No area";
+							}
+		    			}
+
+	    			} else {
+						if (keep) {
+							var areaPoints = []
+							var areaPointsX = []
+							var areaPointsY = []
+							angular.forEach(area.points, function (point) {
+
+								areaPointsX.push(point.lat);
+								areaPointsY.push(point.lng);
+								areaPoints.push(point);
+							})
+							if (checkcheck(coordinates.lat(), coordinates.lng(), areaPointsX, areaPointsY)) {
+								$scope.closesChatId = area.id;
+								$scope.closesChatName = area.name;
+								$scope.inZone = true;
+								keep = false;
+							} else {
+								$scope.inZone = false;
+								$scope.closesChatId = null;
+								$scope.closesChatName = "No area";
+							}
+						};
+					}
 		        });
 			});
 
@@ -618,6 +779,34 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 			        console.log('No results found');
 			      }
 			    } else {
+
+			    	$timeout(function () {
+			    		
+			    		geocoder.geocode({'location': latlng}, function(results, status) {
+						    if (status === google.maps.GeocoderStatus.OK) {
+						      if (results[1]) {
+						      	// console.log(results[0].formatted_address)
+						        // $scope.address = results[0].formatted_address;
+						        var full_address = results[0].formatted_address;
+						        $scope.spot.formatted_address = full_address.substring(0, full_address.indexOf(','));
+						        $scope.spot.coordinates = {lat: coordinates.lat(), lng: coordinates.lng()};
+
+						        $scope.$apply();
+						      } else {
+						        console.log('No results found');
+						      }
+						    } else {
+
+						    	$timeout(function () {
+						    		// body...
+						    	}, 3000);
+						    	$scope.inZone = false;
+						      	console.log('Geocoder failed due to: ' + status);
+						    }
+						});
+
+			    	}, 3000);
+
 			    	$scope.inZone = false;
 			      	console.log('Geocoder failed due to: ' + status);
 			    }
@@ -646,7 +835,7 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 			if (postIt(1)) {
 				var alertPopup = $ionicPopup.alert({
 			     	title: 'You are amazing!',
-			     	template: 'Thank you very much!'
+			     	template: 'Thank you for helping the community!'
 			   	});
 
 			   	alertPopup.then(function(res) {
@@ -655,8 +844,8 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 			}
 		} else {
 			var alertPopup = $ionicPopup.alert({
-		     	title: 'You are out of zone',
-		     	template: 'Sorry, you cant post parking spots out of community area!'
+		     	title: 'Oops..You are out of the community areas.',
+		     	template: 'You can only post parking spots within community areas.'
 		   	});
 	   }
 		
@@ -706,7 +895,7 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 			  $scope.spot.waitingtime = 5;
 			  // An elaborate, custom popup
 			  $scope.myPopup = $ionicPopup.show({
-			    template: '<span class="mins">{{spot.waitingtime}} min</span><br><br><br><span class="settime"> Set waiting time </span> <br> <img class="dragrange" src="img/dragrange.png"><br><br><div class=\"list\"> <div style="background: transparent;border: none;" class=\"item range range-light\">    <span class="minuten">00:00</span>    <input ng-model=\"spot.waitingtime\" type=\"range\" min=\"0\" max=\"15\"> <span class="minuten">15:00</span>  </div></div> ',
+			    template: '<span class="mins">{{spot.waitingtime}} min</span><br><br><br><span class="settime"> Set waiting time </span> <br> <img class="dragrange" src="img/dragrange.png"><br><br><div class=\"list\"> <div style="background: transparent;border: none;" class=\"item range range-light\">    <span class="minuten">00:00</span>    <input ng-model=\"spot.waitingtime\" type=\"range\" min=\"0\" max=\"30\"> <span class="minuten">30:00</span>  </div></div> ',
 			    title: '',
 			    // title: '<button class=\"button-clear \">      <i style=\"color: black;font-size: 30px;padding-left: 15px;padding-top: 30px;\" class=\" the-back ion-android-arrow-back\"></i>      &nbsp;    </button>',
 			    subTitle: '&nbsp;',
@@ -915,6 +1104,10 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
     	console.log("entered");
     })
 
+    $scope.goToAddArea = function () {
+		window.open('http://www.parkito.io/add', '_system', 'location=yes');
+	}
+
 	NgMap.getMap().then(function(map) {
 		// current position
 		var options = {
@@ -949,6 +1142,7 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 		    if ($scope.areasMode) {
 		    	var ref = new Firebase(CONST.fire);
 		    	$scope.areas = $firebaseArray(ref.child('/chatcoords'));
+		    	$scope.poligons = $firebaseArray(ref.child('/chatpoligons'));
 		    	$rootScope.areaCircle = {}
 		    	$rootScope.label = {}
 
@@ -957,67 +1151,224 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 		        $scope.areas.$loaded().then(function () {
 			    		angular.forEach($scope.areas, function(area) {
 						    // Add the circle for this city to the map.
-						    var areaCircle = new google.maps.Circle({
-						      strokeColor: '#D5CCA5',
-						      strokeOpacity: 1,
-						      strokeWeight: 0,
-						      fillColor: area.color,
-						      fillOpacity: 0.40,
-						      map: map,
-						      center: {lat: area.coords.lat, lng: area.coords.lng},
-						      radius: area.radius
-						    });
 
-						    var labelText = '<div style="font-family: Roboto-Regular; color: black">'+area.name+'</div>';
+						    if (area.type=="circle") {
+							    var areaCircle = new google.maps.Circle({
+							      strokeColor: '#D5CCA5',
+							      strokeOpacity: 1,
+							      strokeWeight: 0,
+							      fillColor: area.color,
+							      fillOpacity: 0.40,
+							      map: map,
+							      center: {lat: area.coords.lat, lng: area.coords.lng},
+							      radius: area.radius
+							    });
 
-						    var myOptions = {
-						        content: labelText,
-						        boxStyle: {
-						            background: 'transparent',
-						            border: "0px solid white",
-						            pixelOffset: new google.maps.Size(0, 0),
-						            textAlign: "center",
-						            fontSize: "19pt",
-						            opacity: 0.9,
-						            width: "90px"
-						        },
-						        disableAutoPan: true,
-						        pixelOffset: new google.maps.Size(-45, 0),
-						        position: areaCircle.center,
-						        closeBoxURL: "",
-						        isHidden: false,
-						        enableEventPropagation: true
-						    };
+							    var labelText = '<div style="font-family: Roboto-Regular; color: black">'+area.name+'</div>';
 
-						    var label = new InfoBox(myOptions);
-						    label.open(map);
+							    var myOptions = {
+							        content: labelText,
+							        boxStyle: {
+							            background: 'transparent',
+							            border: "0px solid white",
+							            pixelOffset: new google.maps.Size(0, 0),
+							            textAlign: "center",
+							            fontSize: "19pt",
+							            opacity: 0.9,
+							            width: "90px"
+							        },
+							        disableAutoPan: true,
+							        pixelOffset: new google.maps.Size(-45, 0),
+							        position: areaCircle.center,
+							        closeBoxURL: "",
+							        isHidden: false,
+							        enableEventPropagation: true
+							    };
 
-						    areaCircle.addListener('click', function() {
-			    				$ionicLoading.show();
+							    var label = new InfoBox(myOptions);
+							    label.open(map);
 
-						    	console.log("lol")
-		    					if ($scope.areasMode) {
+							    areaCircle.addListener('click', function() {
+				    				$ionicLoading.show();
 
-							    	Session.user.defaultChatId = area.$id;
-							    	Session.user.defaultChatName = area.name;
+							    	console.log("lol")
+			    					if ($scope.areasMode) {
 
-							    	console.log(Session.user)
+								    	Session.user.defaultChatId = area.$id;
+								    	Session.user.defaultChatName = area.name;
 
-							    	AuthService.updateProfile(Session.user).then(function (result) {
-							          if (result.success) {
-									    // $state.go('tab.dialog-detail',{ id : area.$id, name: area.name})
-			    						$ionicLoading.hide();
+								    	console.log(Session.user)
 
-								    	$rootScope.closeModal();
-							          } else {
-							            console.log("Couldn't set default area");
-							          }
-							        })
-							    }
-							});
+								    	AuthService.updateProfile(Session.user).then(function (result) {
+								          if (result.success) {
+										    // $state.go('tab.dialog-detail',{ id : area.$id, name: area.name})
+				    						$ionicLoading.hide();
+
+									    	$rootScope.closeModal();
+								          } else {
+								            console.log("Couldn't set default area");
+								          }
+								        })
+								    }
+								});
+
+						    } else {
+						    	var triangleCoords = []
+								var polygonCoords = []
+
+							 	var bounds = new google.maps.LatLngBounds();
+								var i;
+								angular.forEach(area.points, function (point) {
+									triangleCoords.push(point)
+									polygonCoords.push(new google.maps.LatLng(point.lat, point.lng));
+								
+								})
+
+								// Construct the polygon.
+								var bermudaTriangle = new google.maps.Polygon({
+								    paths: triangleCoords,
+								    strokeColor: '#FF0000',
+								    strokeOpacity: 0.8,
+								    strokeWeight: 0,
+								    fillColor: area.color,
+								    fillOpacity: 0.35
+								});
+								bermudaTriangle.setMap(map);
+
+								for (i = 0; i < polygonCoords.length; i++) {
+								  bounds.extend(polygonCoords[i]);
+								}
+
+							    var labelText = '<div style="font-family: Roboto-Regular; color: black">'+area.name+'</div>';
+
+							    var myOptions = {
+							        content: labelText,
+							        boxStyle: {
+							            background: 'transparent',
+							            border: "0px solid white",
+							            pixelOffset: new google.maps.Size(0, 0),
+							            textAlign: "center",
+							            fontSize: "19pt",
+							            opacity: 0.9,
+							            width: "90px"
+							        },
+							        disableAutoPan: true,
+							        pixelOffset: new google.maps.Size(-45, 0),
+							        position: bounds.getCenter(),
+							        closeBoxURL: "",
+							        isHidden: false,
+							        enableEventPropagation: true
+							    };
+
+							    var label = new InfoBox(myOptions);
+							    label.open(map);
+
+							    bermudaTriangle.addListener('click', function() {
+				    				$ionicLoading.show();
+
+							    	console.log("lol")
+			    					if ($scope.areasMode) {
+
+								    	Session.user.defaultChatId = area.$id;
+								    	Session.user.defaultChatName = area.name;
+
+								    	console.log(Session.user)
+
+								    	AuthService.updateProfile(Session.user).then(function (result) {
+								          if (result.success) {
+										    // $state.go('tab.dialog-detail',{ id : area.$id, name: area.name})
+				    						$ionicLoading.hide();
+
+									    	$rootScope.closeModal();
+								          } else {
+								            console.log("Couldn't set default area");
+								          }
+								        })
+								    }
+								});
+						    }
 				        });
 						$ionicLoading.hide();
 		        });
+		    //     $scope.poligons.$loaded().then(function () {
+			   //  		angular.forEach($scope.poligons, function(area) {
+
+						// 	var triangleCoords = []
+						// 	var polygonCoords = []
+
+						//  	var bounds = new google.maps.LatLngBounds();
+						// 	var i;
+						// 	angular.forEach(area.points, function (point) {
+						// 		triangleCoords.push(point)
+						// 		polygonCoords.push(new google.maps.LatLng(point.lat, point.lng));
+							
+						// 	})
+
+						// 	// Construct the polygon.
+						// 	var bermudaTriangle = new google.maps.Polygon({
+						// 	    paths: triangleCoords,
+						// 	    strokeColor: '#FF0000',
+						// 	    strokeOpacity: 0.8,
+						// 	    strokeWeight: 0,
+						// 	    fillColor: area.color,
+						// 	    fillOpacity: 0.35
+						// 	});
+						// 	bermudaTriangle.setMap(map);
+
+						// 	for (i = 0; i < polygonCoords.length; i++) {
+						// 	  bounds.extend(polygonCoords[i]);
+						// 	}
+
+						//     var labelText = '<div style="font-family: Roboto-Regular; color: black">'+area.name+'</div>';
+
+						//     var myOptions = {
+						//         content: labelText,
+						//         boxStyle: {
+						//             background: 'transparent',
+						//             border: "0px solid white",
+						//             pixelOffset: new google.maps.Size(0, 0),
+						//             textAlign: "center",
+						//             fontSize: "19pt",
+						//             opacity: 0.9,
+						//             width: "90px"
+						//         },
+						//         disableAutoPan: true,
+						//         pixelOffset: new google.maps.Size(-45, 0),
+						//         position: bounds.getCenter(),
+						//         closeBoxURL: "",
+						//         isHidden: false,
+						//         enableEventPropagation: true
+						//     };
+
+						//     var label = new InfoBox(myOptions);
+						//     label.open(map);
+
+						//     areaCircle.addListener('click', function() {
+			   //  				$ionicLoading.show();
+
+						//     	console.log("lol")
+		    // 					if ($scope.areasMode) {
+
+						// 	    	Session.user.defaultChatId = area.$id;
+						// 	    	Session.user.defaultChatName = area.name;
+
+						// 	    	console.log(Session.user)
+
+						// 	    	AuthService.updateProfile(Session.user).then(function (result) {
+						// 	          if (result.success) {
+						// 			    // $state.go('tab.dialog-detail',{ id : area.$id, name: area.name})
+			   //  						$ionicLoading.hide();
+
+						// 		    	$rootScope.closeModal();
+						// 	          } else {
+						// 	            console.log("Couldn't set default area");
+						// 	          }
+						// 	        })
+						// 	    }
+						// 	});
+				  //       });
+						// $ionicLoading.hide();
+		    //     });
 		    } else {
 				$ionicLoading.hide();    	
 		    }

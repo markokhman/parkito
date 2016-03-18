@@ -5,13 +5,13 @@
   The Friends service returns an array of friend data
 -->
 
-<ion-view>
+<ion-view cache-view="false">
   <ion-nav-bar> 
-    <ion-nav-title style="font-size: 20px !important;">
+    <ion-nav-title style="font-size: 15px !important;">
       <!-- <img src="../img/Parking.png" style="width:20px;"> -->
         {{spot.formatted_address}} ({{closesChatName}})
     </ion-nav-title>
-    <ion-nav-back-button class="button-clear" style="margin-top:7px !important;">
+    <ion-nav-back-button class="button-clear">
       <i style="color: black;font-size: 30px;padding-left: 15px;padding-top: 30px;" class="ion-android-arrow-back"></i>
       &nbsp;
     </ion-nav-back-button>
