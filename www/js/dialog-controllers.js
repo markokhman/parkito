@@ -349,8 +349,21 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
       			$scope.seconds = "00";
 				$scope.minutes = "00";
 
-				var chatRef = new Firebase("https://parkito.firebaseio.com").child("chatcontents/"+$scope.chat+"/"+$scope.id+"/taken");
-                chatRef.set(true);
+				var chatRef = new Firebase("https://parkito.firebaseio.com").child("chatcontents/"+$scope.chat+"/"+$scope.id);
+				chatRef.once('value', function (snapshot) {
+					var the_spot = snapshot.val();
+					angular.forEach(the_spot.spotAreas, function (area) {
+			  			console.log(area);
+			  			var chatRef = new Firebase("https://parkito.firebaseio.com").child("chatcontents/"+area+"/"+$scope.id+"/taken");
+		                chatRef.set(true);
+		                // var trashRef = new Firebase("https://parkito.firebaseio.com").child("chatstrash/"+$scope.chat+"/"+$scope.id+"/expired");
+		                // trashRef.set(true);
+			  		});					
+				})
+
+
+				// var chatRef = new Firebase("https://parkito.firebaseio.com").child("chatcontents/"+$scope.chat+"/"+$scope.id+"/taken");
+    //             chatRef.set(true);
                 var trashRef = new Firebase("https://parkito.firebaseio.com").child("chatstrash/"+$scope.chat+"/"+$scope.id+"/expired");
                 trashRef.set(true);
       		}
@@ -477,7 +490,15 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 		  myPopup.then(function(res) {
 		  	if (res) {
 		  		spot.taken = true;
-		  		$scope.messages.$save($scope.messages.$indexFor(spot.$id));
+		  		angular.forEach(spot.spotAreas, function (area) {
+		  			console.log(area);
+		  			var chatRef = new Firebase("https://parkito.firebaseio.com").child("chatcontents/"+area+"/"+spot.$id+"/taken");
+	                chatRef.set(true);
+	                // var trashRef = new Firebase("https://parkito.firebaseio.com").child("chatstrash/"+$scope.chat+"/"+$scope.id+"/expired");
+	                // trashRef.set(true);
+		  		});
+
+		  		// $scope.messages.$save($scope.messages.$indexFor(spot.$id));
 		    	console.log('Redirected to WAZE!', res);
 
 				var storyRef = new Firebase(CONST.fire).child("userstory/"+Session.user.uid);
@@ -647,7 +668,8 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 			$scope.areas.$loaded().then(function () {
 			    var keep = true;
 			    $ionicLoading.hide();
-				
+				var count = 0;
+				$scope.spotAreas = {}
 				angular.forEach($scope.areas, function(area) {
 
 				    // Add the circle for this city to the map.
@@ -667,7 +689,10 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 								$scope.closesChatId = area.id;
 								$scope.closesChatName = area.name;
 								$scope.inZone = true;
-								keep = false;
+								// keep = false;
+								$scope.spotAreas[count] = area.id;
+								count++;
+								console.log('count after ++', count)
 							} else {
 								$scope.inZone = false;
 								$scope.closesChatId = null;
@@ -681,7 +706,6 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 							var areaPointsX = []
 							var areaPointsY = []
 							angular.forEach(area.points, function (point) {
-
 								areaPointsX.push(point.lat);
 								areaPointsY.push(point.lng);
 								areaPoints.push(point);
@@ -690,7 +714,10 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 								$scope.closesChatId = area.id;
 								$scope.closesChatName = area.name;
 								$scope.inZone = true;
-								keep = false;
+								// keep = false;
+								$scope.spotAreas[count] = area.id;
+								count++;
+								console.log('count after ++', count)
 							} else {
 								$scope.inZone = false;
 								$scope.closesChatId = null;
@@ -721,15 +748,20 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 			    geocodeLatLng(geocoder, map, infowindow, coordinates);
 
 			    var keep = true;
-			    
+			    var count = 0;
+				$scope.spotAreas = {}
 	    		angular.forEach($scope.areas, function(area) {
 	    			if (area.type=="circle") {
 		    			if (keep) {
 							if (getDistanceFromLatLonInKm(coordinates.lat(), coordinates.lng(), area.coords.lat, area.coords.lng, area.radius)) {
 								$scope.closesChatId = area.id;
 								$scope.closesChatName = area.name;
+								$scope.spotAreas[count] = area.id;
+								count++;
+								console.log('count after ++', count)
 								$scope.inZone = true;
-								keep = false;
+								// keep = false;
+
 							} else {
 								$scope.inZone = false;
 								$scope.closesChatId = null;
@@ -751,8 +783,11 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 							if (checkcheck(coordinates.lat(), coordinates.lng(), areaPointsX, areaPointsY)) {
 								$scope.closesChatId = area.id;
 								$scope.closesChatName = area.name;
+								$scope.spotAreas[count] = area.id;
+								count++;
+								console.log('count after ++', count)
 								$scope.inZone = true;
-								keep = false;
+								// keep = false;
 							} else {
 								$scope.inZone = false;
 								$scope.closesChatId = null;
@@ -860,6 +895,9 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 		$scope.spot.mestype = "spot";
 		$scope.spot.name = $scope.closesChatName;
 		$scope.spot.taken = false;
+		$scope.spot.spotAreas = {};
+		$scope.spot.spotAreas = $scope.spotAreas;
+		// console.log($scope.spotAreas);
 		$scope.spot.timeposted = now;
 		$scope.spot.timedeadline = now + (1000 * 60 * waitingtime);
 		$scope.spot.timestamp = Firebase.ServerValue.TIMESTAMP;
@@ -872,16 +910,34 @@ angular.module('dialog-controllers', ['firebase','ngMap','angular-svg-round-prog
 			}
 
 		}
+		var first = true;
+		var counter = 0;
+		var the_id = 0;
 
-    	
-		var chatRef = new Firebase(CONST.fire).child("chatcontents/"+$scope.closesChatId);
-		var newSpot = chatRef.push();
-		newSpot.set($scope.spot);
+		angular.forEach($scope.spotAreas, function (spotArea) {
+			console.log(spotArea);
+			console.log('one more step');
+			if (the_id!=0) {
+				console.log("not first time")
+				var chatRef = new Firebase(CONST.fire).child("chatcontents/"+spotArea+"/"+the_id);
+				// var newSpot = chatRef.push();
+				$scope.spot.id = the_id;
+				chatRef.set($scope.spot);			
+			} else {
+				console.log("first time")
+				var chatRef = new Firebase(CONST.fire).child("chatcontents/"+spotArea);
+				var newSpot = chatRef.push();
+				$scope.spot.id = newSpot.key();			
+				newSpot.set($scope.spot);
+				the_id = newSpot.key();
+			}
 
-		$scope.spot.posted = true;
-		var storyRef = new Firebase(CONST.fire).child("userstory/"+Session.user.uid);
-		var recentSpot = storyRef.push();
-		recentSpot.set($scope.spot);
+			$scope.spot.posted = true;
+			var storyRef = new Firebase(CONST.fire).child("userstory/"+Session.user.uid);
+			var recentSpot = storyRef.push();
+			recentSpot.set($scope.spot);
+		});
+
 
 		return true;
 	}
